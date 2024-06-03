@@ -23,6 +23,7 @@ public class UserController {
 
     @GetMapping("/me")
     public UserDto selfInfo(Principal principal) {
-        return userService.selfInfo(principal.getName());
+//        return userService.selfInfo(principal.getName());
+        return userService.selfInfo(null);
     }
 }
