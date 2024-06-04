@@ -1,0 +1,17 @@
+@import url(./vendor/normalize.css);
+
+@import url(./vendor/font.css);
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: max-content;
+  height: 100%;
+}
+
+#root {
+  min-height: max-content;
+  height: 100%;
+}

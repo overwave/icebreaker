@@ -1,0 +1,35 @@
+.page {
+  min-height: 100vh;
+  height: max-content;
+}
+
+.content {
+  min-height: max-content;
+  height: 100%;
+}
+
+.content__container {
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.content__info-block {
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 130px 30px;
+}
+
+.content__info-text {
+  margin: 0;
+  text-align: center;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.11;
+  color: #a0a0a0;
+  padding: 50px 0;
+}

@@ -2,3 +2,26 @@
 *.iml
 deploy.sh
 deploy
+
+# dependencies
+/icebreaker_frontend/node_modules
+/icebreaker_frontend/.pnp
+/icebreaker_frontend/.pnp.js
+
+# testing
+/icebreaker_frontend/coverage
+
+# production
+/icebreaker_frontend/build
+
+# misc
+/icebreaker_frontend/.DS_Store
+/icebreaker_frontend/.env.local
+/icebreaker_frontend/.env.development.local
+/icebreaker_frontend/.env.test.local
+/icebreaker_frontend/.env.production.local
+
+/icebreaker_frontend/npm-debug.log*
+/icebreaker_frontend/yarn-debug.log*
+/icebreaker_frontend/yarn-error.log*
+
