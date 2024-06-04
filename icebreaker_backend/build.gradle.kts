@@ -39,6 +39,10 @@ dependencies {
     testImplementation("io.zonky.test:embedded-postgres:2.0.7")
     implementation("org.apache.commons:commons-lang3:3.14.0")
 
+    implementation("net.sf.geographiclib:GeographicLib-Java:2.0")
+    implementation("org.apache.sis.core:sis-referencing:1.4")
+//    implementation("org.apache.sis.core:sis-geometry:1.4")
+
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
     testCompileOnly("org.projectlombok:lombok:1.18.32")
