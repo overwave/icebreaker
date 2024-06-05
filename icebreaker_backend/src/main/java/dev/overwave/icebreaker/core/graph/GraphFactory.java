@@ -24,6 +24,7 @@ public class GraphFactory {
     private static final float MIN_LONGITUDE = 20F;
     private static final float MAX_LONGITUDE = 200F;
     private static final float BASE_EDGE_LENGTH = 20_000F; // 1 km
+    private static final boolean DISABLE_LRU = true;
 
     private static final LruCache<Entry<Point, Point>, Float> DISTANCE_CACHE = new LruCache<>(10);
 
@@ -118,6 +119,11 @@ public class GraphFactory {
     }
 
     float getDistance(Point from, Point to) {
+        if (DISABLE_LRU) {
+            GeodesicLine line = Geodesic.WGS84.InverseLine(from.lat(), from.lon(), to.lat(), to.lon(),
+                    GeodesicMask.DISTANCE_IN | GeodesicMask.LATITUDE | GeodesicMask.LONGITUDE);
+            return (float) line.Distance();
+        }
         Entry<Point, Point> entry = Map.entry(from, to);
         Float cached = DISTANCE_CACHE.get(entry);
         if (cached != null) {
