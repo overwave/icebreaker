@@ -36,6 +36,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1")
     testImplementation("io.zonky.test:embedded-postgres:2.0.7")
+    implementation("org.apache.commons:commons-lang3:3.14.0")
 
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
