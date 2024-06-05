@@ -27,7 +27,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.liquibase:liquibase-core")
-    implementation("org.apache.poi:poi-ooxml:3.5-beta5")
+    implementation("org.apache.poi:poi-ooxml:4.1.1")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
@@ -37,7 +37,10 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1")
     testImplementation("io.zonky.test:embedded-postgres:2.0.7")
+
     implementation("org.apache.commons:commons-lang3:3.14.0")
+
+    implementation("net.sf.geographiclib:GeographicLib-Java:2.0")
 
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
@@ -46,5 +49,6 @@ dependencies {
 }
 
 tasks.withType<Test> {
+    maxHeapSize = "1024m"
     useJUnitPlatform()
 }
