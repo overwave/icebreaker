@@ -29,7 +29,7 @@ public class XlsxParser {
         List<List<RawVelocity>> matrix = new ArrayList<>();
 
         //проходимся по всем строкам в первых 2х листах с долготой и широтой
-        for (int rowNum = lonSheet.getFirstRowNum(); rowNum < lonSheet.getLastRowNum(); rowNum++) {
+        for (int rowNum = lonSheet.getFirstRowNum(); rowNum <= lonSheet.getLastRowNum(); rowNum++) {
             //получаем все данные по интегральной тяжести льда в строке таблицы
             List<RawVelocity> velocitiesInRow = getAllVelocitiesInSheetRow(workbook, rowNum);
             matrix.add(velocitiesInRow);
