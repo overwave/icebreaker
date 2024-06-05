@@ -43,6 +43,11 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.32")
     testCompileOnly("org.projectlombok:lombok:1.18.32")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.32")
+
+    tasks.withType<Test> {
+        maxHeapSize = "1024m"
+        useJUnitPlatform()
+    }
 }
 
 tasks.withType<Test> {

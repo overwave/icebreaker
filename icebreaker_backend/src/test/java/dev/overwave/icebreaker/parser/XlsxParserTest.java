@@ -43,7 +43,7 @@ class XlsxParserTest {
 
     @Test
     void testParseIntegralVelocityOfIce() {
-        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityOfIce("src/main/resources/IntegrVelocityTest" +
+        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityOfIce("src/test/resources/IntegrVelocityTest" +
                 ".xlsx");
 
         assertThat(matrix).hasSize(2);
@@ -54,5 +54,13 @@ class XlsxParserTest {
         assertThat(matrix.getFirst().get(1)).isEqualTo(rawVelocityB1);
         assertThat(matrix.get(1).getFirst()).isEqualTo(rawVelocityA2);
         assertThat(matrix.get(1).get(1)).isEqualTo(rawVelocityB2);
+    }
+
+    @Test
+    void testParseRosatomIntegrVelocity() {
+        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityOfIce("src/test/resources/IntegrVelocity" +
+                ".xlsx");
+
+        assertThat(matrix.getFirst().getFirst().velocities()).hasSize(14);
     }
 }
