@@ -1,4 +1,4 @@
-package dev.overwave.icebreaker.core.util;
+package dev.overwave.icebreaker.core.geospatial;
 
 import java.util.List;
 

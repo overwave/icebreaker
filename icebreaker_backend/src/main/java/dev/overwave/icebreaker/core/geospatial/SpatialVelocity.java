@@ -1,10 +1,12 @@
-package dev.overwave.icebreaker.core.util;
+package dev.overwave.icebreaker.core.geospatial;
+
+import java.util.List;
 
 public record SpatialVelocity(
         Point topLeft,
         Point topRight,
         Point bottomLeft,
         Point bottomRight,
-        ContinuousVelocity[] velocities
+        List<ContinuousVelocity> velocities
 ) {
 }
