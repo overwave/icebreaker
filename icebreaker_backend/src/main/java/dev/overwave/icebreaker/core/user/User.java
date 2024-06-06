@@ -1,6 +1,6 @@
 package dev.overwave.icebreaker.core.user;
 
-import dev.overwave.icebreaker.core.util.LongId;
+import dev.overwave.icebreaker.core.database.LongId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;

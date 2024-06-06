@@ -6,7 +6,7 @@ import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
 import lombok.SneakyThrows;
-import org.apache.poi.openxml4j.opc.Package;
+import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -21,7 +21,7 @@ public class XlsxParser {
 
     @SneakyThrows
     public List<List<RawVelocity>> parseIntegralVelocityOfIce(String filename) {
-        Package pkg = Package.open(filename);
+        OPCPackage pkg = OPCPackage.open(filename);
         XSSFWorkbook workbook = new XSSFWorkbook(pkg);
 
         XSSFSheet lonSheet = workbook.getSheet("lon");
