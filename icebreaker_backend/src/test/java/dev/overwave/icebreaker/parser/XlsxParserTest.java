@@ -8,20 +8,17 @@ import dev.overwave.icebreaker.core.parser.XlsxParser;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.Month;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class XlsxParserTest {
     private final XlsxParser xlsxParser = new XlsxParser();
-
-    LocalDateTime date1 = LocalDateTime.of(2020, Month.MARCH, 3, 0, 0, 0);
-    LocalDateTime date2 = LocalDateTime.of(2020, Month.MARCH, 10, 0, 0, 0);
-    Interval interval1 = new Interval(date1.toInstant(ZoneOffset.UTC), Duration.ofDays(7));
-    Interval interval2 = new Interval(date2.toInstant(ZoneOffset.UTC), Duration.ofDays(7));
+    private final Instant date1 = Instant.parse("2020-03-03T00:00:00Z");
+    private final Instant date2 = Instant.parse("2020-03-10T00:00:00Z");
+    private final Interval interval1 = new Interval(date1, Duration.ofDays(7));
+    private final Interval interval2 = new Interval(date2, Duration.ofDays(7));
 
     private final List<ContinuousVelocity> velocitiesA1 = List.of(
             new ContinuousVelocity(-10F, interval1),
