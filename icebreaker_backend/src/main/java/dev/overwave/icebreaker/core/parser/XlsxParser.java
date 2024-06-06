@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XlsxParser {
-    private static final Duration DURATION = Duration.ofDays(7);
 
     @SneakyThrows
     public List<List<RawVelocity>> parseIntegralVelocityOfIce(String filename) {
@@ -29,7 +28,7 @@ public class XlsxParser {
         List<List<RawVelocity>> matrix = new ArrayList<>();
 
         //проходимся по всем строкам в первых 2х листах с долготой и широтой
-        for (int rowNum = lonSheet.getFirstRowNum(); rowNum < lonSheet.getLastRowNum(); rowNum++) {
+        for (int rowNum = lonSheet.getFirstRowNum(); rowNum <= lonSheet.getLastRowNum(); rowNum++) {
             //получаем все данные по интегральной тяжести льда в строке таблицы
             List<RawVelocity> velocitiesInRow = getAllVelocitiesInSheetRow(workbook, rowNum);
             matrix.add(velocitiesInRow);
@@ -64,9 +63,16 @@ public class XlsxParser {
         for (int sheetNum = 2; sheetNum < workbook.getNumberOfSheets(); sheetNum++) {
             XSSFSheet velocitySheet = workbook.getSheetAt(sheetNum);
             String sheetDate = velocitySheet.getSheetName();
+            //рассчитываем длительность между двумя датами (листами)
             Instant instant = DateParser.stringDateToInstant(sheetDate);
+            Duration duration = Duration.ofDays(7);
+            if (sheetNum + 1 < workbook.getNumberOfSheets()) {
+                XSSFSheet nextSheet = workbook.getSheetAt(sheetNum + 1);
+                Instant nextInstant = DateParser.stringDateToInstant(nextSheet.getSheetName());
+                duration = Duration.between(instant, nextInstant);
+            }
             float integralVelocity = (float) velocitySheet.getRow(rowNum).getCell(cellNum).getNumericCellValue();
-            velocities.add(new ContinuousVelocity(integralVelocity, new Interval(instant, DURATION)));
+            velocities.add(new ContinuousVelocity(integralVelocity, new Interval(instant, duration)));
         }
         return velocities;
     }
