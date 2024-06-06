@@ -1,51 +1,48 @@
 package dev.overwave.icebreaker.core.parser;
 
 
-import dev.overwave.icebreaker.core.util.ContinuousVelocity;
-import dev.overwave.icebreaker.core.util.Interval;
-import dev.overwave.icebreaker.core.util.Point;
-import dev.overwave.icebreaker.core.util.RawVelocity;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
+import dev.overwave.icebreaker.core.geospatial.Interval;
+import dev.overwave.icebreaker.core.geospatial.Point;
+import dev.overwave.icebreaker.core.geospatial.RawVelocity;
+import lombok.SneakyThrows;
 import org.apache.poi.openxml4j.opc.Package;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 public class XlsxParser {
-    private static final Duration duration = Duration.ofDays(7);
 
+    @SneakyThrows
     public List<List<RawVelocity>> parseIntegralVelocityOfIce(String filename) {
-        try {
-            Package pkg = Package.open(filename);
-            XSSFWorkbook workbook = new XSSFWorkbook(pkg);
+        Package pkg = Package.open(filename);
+        XSSFWorkbook workbook = new XSSFWorkbook(pkg);
 
-            XSSFSheet lonSheet = workbook.getSheet("lon");
-            XSSFSheet latSheet = workbook.getSheet("lat");
-            List<List<RawVelocity>> matrix = new ArrayList<>();
+        XSSFSheet lonSheet = workbook.getSheet("lon");
+        List<List<RawVelocity>> matrix = new ArrayList<>();
 
-            //проходимся по всем строкам в первых 2х листах с долготой и широтой
-            for (int rowNum = lonSheet.getFirstRowNum(); rowNum < lonSheet.getLastRowNum(); rowNum++) {
-                XSSFRow lonRow = lonSheet.getRow(rowNum);
-                XSSFRow latRow = latSheet.getRow(rowNum);
-                //получаем все данные по интегральной тяжести льда в строке таблицы
-                List<RawVelocity> velocitiesInRow = getAllVelocitiesInSheetRow(lonRow, latRow, workbook, rowNum);
-                matrix.add(velocitiesInRow);
-            }
-            return matrix;
-
-        } catch (IOException | InvalidFormatException e) {
-            throw new RuntimeException("Error reading " + filename, e);
+        //проходимся по всем строкам в первых 2х листах с долготой и широтой
+        for (int rowNum = lonSheet.getFirstRowNum(); rowNum <= lonSheet.getLastRowNum(); rowNum++) {
+            //получаем все данные по интегральной тяжести льда в строке таблицы
+            List<RawVelocity> velocitiesInRow = getAllVelocitiesInSheetRow(workbook, rowNum);
+            matrix.add(velocitiesInRow);
         }
+        return matrix;
+
     }
 
-    private List<RawVelocity> getAllVelocitiesInSheetRow(XSSFRow lonRow, XSSFRow latRow, XSSFWorkbook workbook, int rowNum) {
+    private List<RawVelocity> getAllVelocitiesInSheetRow(XSSFWorkbook workbook, int rowNum) {
+        XSSFSheet lonSheet = workbook.getSheet("lon");
+        XSSFSheet latSheet = workbook.getSheet("lat");
+        XSSFRow lonRow = lonSheet.getRow(rowNum);
+        XSSFRow latRow = latSheet.getRow(rowNum);
+
         List<RawVelocity> velocitiesInRow = new ArrayList<>();
         //проходимся по каждой ячейке в строке, чтобы узнать координаты
         for (int cellNum = lonRow.getFirstCellNum(); cellNum < lonRow.getLastCellNum(); cellNum++) {
@@ -66,7 +63,14 @@ public class XlsxParser {
         for (int sheetNum = 2; sheetNum < workbook.getNumberOfSheets(); sheetNum++) {
             XSSFSheet velocitySheet = workbook.getSheetAt(sheetNum);
             String sheetDate = velocitySheet.getSheetName();
+            //рассчитываем длительность между двумя датами (листами)
             Instant instant = DateParser.stringDateToInstant(sheetDate);
+            Duration duration = Duration.ofDays(7);
+            if (sheetNum + 1 < workbook.getNumberOfSheets()) {
+                XSSFSheet nextSheet = workbook.getSheetAt(sheetNum + 1);
+                Instant nextInstant = DateParser.stringDateToInstant(nextSheet.getSheetName());
+                duration = Duration.between(instant, nextInstant);
+            }
             float integralVelocity = (float) velocitySheet.getRow(rowNum).getCell(cellNum).getNumericCellValue();
             velocities.add(new ContinuousVelocity(integralVelocity, new Interval(instant, duration)));
         }
