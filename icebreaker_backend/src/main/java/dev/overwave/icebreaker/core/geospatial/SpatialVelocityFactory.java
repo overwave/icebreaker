@@ -1,8 +1,11 @@
 package dev.overwave.icebreaker.core.geospatial;
 
+import lombok.experimental.UtilityClass;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@UtilityClass
 public class SpatialVelocityFactory {
 
     public List<SpatialVelocity> formSpatialVelocityGrid(List<List<RawVelocity>> velocityMatrix) {
