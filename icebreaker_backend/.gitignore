@@ -1,2 +1,4 @@
 .gradle
 build
+tiles_generation
+mercator_*
