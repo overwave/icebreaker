@@ -14,7 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class XlsxParserTest {
-    private final XlsxParser xlsxParser = new XlsxParser();
     private final Instant date1 = Instant.parse("2020-03-03T00:00:00Z");
     private final Instant date2 = Instant.parse("2020-03-10T00:00:00Z");
     private final Interval interval1 = new Interval(date1, Duration.ofDays(7));
@@ -40,8 +39,7 @@ class XlsxParserTest {
 
     @Test
     void testParseIntegralVelocityOfIce() {
-        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityOfIce("src/test/resources/IntegrVelocityTest" +
-                ".xlsx");
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityOfIce("/IntegrVelocityTest.xlsx");
 
         assertThat(matrix).hasSize(2);
         assertThat(matrix.getFirst()).hasSize(2);
@@ -55,8 +53,7 @@ class XlsxParserTest {
 
     @Test
     void testParseRosatomIntegrVelocity() {
-        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityOfIce("src/test/resources/IntegrVelocity" +
-                ".xlsx");
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityOfIce("/IntegrVelocity.xlsx");
 
         assertThat(matrix.getFirst().getFirst().velocities()).hasSize(14);
     }
