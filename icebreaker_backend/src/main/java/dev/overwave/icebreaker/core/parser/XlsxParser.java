@@ -5,6 +5,7 @@ import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
+import dev.overwave.icebreaker.core.navigation.ReferencePoint;
 import lombok.SneakyThrows;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -20,7 +21,7 @@ import java.util.List;
 public class XlsxParser {
 
     @SneakyThrows
-    public List<List<RawVelocity>> parseIntegralVelocityOfIce(String filename) {
+    public List<List<RawVelocity>> parseIntegralVelocityTable(String filename) {
         OPCPackage pkg = OPCPackage.open(filename);
         XSSFWorkbook workbook = new XSSFWorkbook(pkg);
 
@@ -34,6 +35,26 @@ public class XlsxParser {
             matrix.add(velocitiesInRow);
         }
         return matrix;
+
+    }
+
+    @SneakyThrows
+    public List<ReferencePoint> parseReferencePointsTable(String filename) {
+        OPCPackage pkg = OPCPackage.open(filename);
+        XSSFWorkbook workbook = new XSSFWorkbook(pkg);
+
+        XSSFSheet pointsSheet = workbook.getSheet("points");
+        List<ReferencePoint> points = new ArrayList<>();
+
+        for (int rowNum = 1; rowNum <= pointsSheet.getLastRowNum(); rowNum++) {
+            XSSFRow row = pointsSheet.getRow(rowNum);
+            float lat = (float) row.getCell(1).getNumericCellValue();
+            float lon = (float) row.getCell(2).getNumericCellValue();
+            String name = row.getCell(3).getStringCellValue();
+            ReferencePoint point = new ReferencePoint(name, lat, lon);
+            points.add(point);
+        }
+        return points;
 
     }
 

@@ -4,6 +4,7 @@ import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
+import dev.overwave.icebreaker.core.navigation.ReferencePoint;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
 import org.junit.jupiter.api.Test;
 
@@ -39,8 +40,8 @@ class XlsxParserTest {
     private final RawVelocity rawVelocityB2 = new RawVelocity(new Point(43.7F, 24.5F), velocitiesB2);
 
     @Test
-    void testParseIntegralVelocityOfIce() {
-        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityOfIce("src/test/resources/IntegrVelocityTest" +
+    void testParseIntegralVelocityTable() {
+        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityTable("src/test/resources/IntegrVelocityTest" +
                 ".xlsx");
 
         assertThat(matrix).hasSize(2);
@@ -54,10 +55,18 @@ class XlsxParserTest {
     }
 
     @Test
-    void testParseRosatomIntegrVelocity() {
-        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityOfIce("src/test/resources/IntegrVelocity" +
+    void testParseRosatomIntegrVelocityTable() {
+        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityTable("src/test/resources/IntegrVelocity" +
                 ".xlsx");
 
         assertThat(matrix.getFirst().getFirst().velocities()).hasSize(14);
+    }
+
+    @Test
+    void testParseReferencePointsTable() {
+        List<ReferencePoint> points = xlsxParser.parseReferencePointsTable("src/test/resources/ГрафДанные" +
+                ".xlsx");
+
+        assertThat(points).hasSize(47);
     }
 }
