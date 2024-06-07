@@ -26,7 +26,7 @@ import static java.util.Objects.requireNonNull;
 public class XlsxParser {
 
     @SneakyThrows
-    public List<List<RawVelocity>> parseIntegralVelocityOfIce(String filename) {
+    public List<List<RawVelocity>> parseIntegralVelocityTable(String filename) {
         OPCPackage pkg = OPCPackage.open(requireNonNull(XlsxParser.class.getResourceAsStream(filename)));
         XSSFWorkbook workbook = new XSSFWorkbook(pkg);
 
