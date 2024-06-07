@@ -12,12 +12,15 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class XlsxParser {
 
     @SneakyThrows
@@ -41,8 +44,18 @@ public class XlsxParser {
     @SneakyThrows
     public List<ReferencePoint> parseReferencePointsTable(String filename) {
         OPCPackage pkg = OPCPackage.open(filename);
-        XSSFWorkbook workbook = new XSSFWorkbook(pkg);
+        return doParseReferencePointsTable(pkg);
+    }
 
+    @SneakyThrows
+    public List<ReferencePoint> parseReferencePointsTable(File file) {
+        OPCPackage pkg = OPCPackage.open(file);
+        return doParseReferencePointsTable(pkg);
+    }
+
+    @SneakyThrows
+    private static List<ReferencePoint> doParseReferencePointsTable(OPCPackage pkg) {
+        XSSFWorkbook workbook = new XSSFWorkbook(pkg);
         XSSFSheet pointsSheet = workbook.getSheet("points");
         List<ReferencePoint> points = new ArrayList<>();
 
@@ -55,7 +68,6 @@ public class XlsxParser {
             points.add(point);
         }
         return points;
-
     }
 
     private List<RawVelocity> getAllVelocitiesInSheetRow(XSSFWorkbook workbook, int rowNum) {
