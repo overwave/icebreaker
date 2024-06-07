@@ -10,6 +10,7 @@ import dev.overwave.icebreaker.core.geospatial.SpatialVelocityFactory;
 import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.graph.SparseList;
+import dev.overwave.icebreaker.core.map.Mercator;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -19,8 +20,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +36,7 @@ public class GraphFactoryTest {
         Graph graph = GraphFactory.buildWeightedGraph(spatialVelocities);
         List<SparseList<Node>> sparseLists = graph.getGraph();
         List<ContinuousVelocity> vvv = sparseLists.getFirst().getContent().get(100).edges().getFirst().velocities();
-        for (int vv = 0; vv < vvv.size(); vv++) {
+        for (int vv = 0; vv < 1; vv++) {
             BufferedImage image = ImageIO.read(fromClassPath());
             Graphics2D graphics2D = image.createGraphics();
             for (SparseList<Node> nodes : sparseLists) {
@@ -70,9 +69,25 @@ public class GraphFactoryTest {
                 }
             }
 
+//            graphics2D.setStroke(new BasicStroke(3));
+            graphics2D.setColor(Color.BLUE);
+            Entry<Double, Double> pointLeft = Mercator.pointToMercatorNormalized(new Point(64.95F, 40.0F));
+            graphics2D.drawLine(
+                    (int) (pointLeft.getKey() * image.getWidth()),
+                    (int) (pointLeft.getValue() * image.getHeight()),
+                    (int) (pointLeft.getKey() * image.getWidth()),
+                    (int) (pointLeft.getValue() * image.getHeight())
+            );
+            pointLeft = Mercator.pointToMercatorNormalized(new Point(70.4F, 83.4F));
+            graphics2D.drawLine(
+                    (int) (pointLeft.getKey() * image.getWidth()),
+                    (int) (pointLeft.getValue() * image.getHeight()),
+                    (int) (pointLeft.getKey() * image.getWidth()),
+                    (int) (pointLeft.getValue() * image.getHeight())
+            );
+
             image = image.getSubimage(3158, 66, 3147, 3203);
-            LocalDate date = vvv.get(vv).interval().instant().atOffset(ZoneOffset.UTC).toLocalDate();
-            ImageIO.write(image, "PNG", new File("mercator_edges_velocity_" + date + ".png"));
+            ImageIO.write(image, "PNG", new File("mercator_edges_velocity_" + ".png"));
         }
     }
 
