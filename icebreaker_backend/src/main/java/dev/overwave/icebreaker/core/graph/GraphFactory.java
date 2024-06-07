@@ -1,10 +1,12 @@
 package dev.overwave.icebreaker.core.graph;
 
 
+import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Edge;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.SpatialVelocity;
+import dev.overwave.icebreaker.core.util.GridIndexer;
 import dev.overwave.icebreaker.core.util.ListUtils;
 import dev.overwave.icebreaker.core.util.LruCache;
 import lombok.experimental.UtilityClass;
@@ -19,23 +21,23 @@ import java.util.Map.Entry;
 
 @UtilityClass
 public class GraphFactory {
-    private static final float MIN_LATITUDE = 60F;
-    private static final float MAX_LATITUDE = 85F;
-    private static final float MIN_LONGITUDE = 20F;
-    private static final float MAX_LONGITUDE = 200F;
-    private static final float BASE_EDGE_LENGTH = 20_000F; // 1 km
+    public static final float MIN_LATITUDE = 64F;
+    public static final float MAX_LATITUDE = 84F;
+    public static final float MIN_LONGITUDE = 20F;
+    public static final float MAX_LONGITUDE = 200F;
+    private static final float BASE_EDGE_LENGTH = 10_000F; // 1 km
     private static final boolean DISABLE_LRU = true;
 
     private static final LruCache<Entry<Point, Point>, Float> DISTANCE_CACHE = new LruCache<>(10);
 
-    public Graph buildWeightedGraph(List<SpatialVelocity> mesh) {
+    public Graph buildWeightedGraph(List<SpatialVelocity> velocityGrid) {
         List<SparseList<Node>> uniformGraph = buildUniformGraph();
-        connectNeighbours(uniformGraph);
-//        print();
+        GridIndexer gridIndexer = new GridIndexer(velocityGrid);
+        connectNeighbours(uniformGraph, gridIndexer);
         return new Graph(uniformGraph);
     }
 
-    List<SparseList<Node>> buildUniformGraph() {
+    private List<SparseList<Node>> buildUniformGraph() {
         Point cursor = new Point(MIN_LATITUDE, MIN_LONGITUDE);
         int sparseFactor = 0;
         float latStep = getLatStep(cursor);
@@ -60,7 +62,7 @@ public class GraphFactory {
         return grid;
     }
 
-    private void connectNeighbours(List<SparseList<Node>> pointGraph) {
+    private void connectNeighbours(List<SparseList<Node>> pointGraph, GridIndexer gridIndexer) {
         int width = pointGraph.getFirst().getContent().size();
 
         for (int row = 0; row < pointGraph.size(); row++) {
@@ -81,29 +83,42 @@ public class GraphFactory {
                 Node topLeft = topPoints.getSparse(col - step);
                 Node leftLeftTop = topPoints.getSparse(col - step - step);
 
-                connect(current, right);
-                connect(current, rightRightTop);
-                connect(current, topRight);
-                connect(current, topTopRight);
-                connect(current, top);
-                connect(current, topTopLeft);
-                connect(current, topLeft);
-                connect(current, leftLeftTop);
+                connect(current, right, gridIndexer);
+                connect(current, rightRightTop, gridIndexer);
+                connect(current, topRight, gridIndexer);
+                connect(current, topTopRight, gridIndexer);
+                connect(current, top, gridIndexer);
+                connect(current, topTopLeft, gridIndexer);
+                connect(current, topLeft, gridIndexer);
+                connect(current, leftLeftTop, gridIndexer);
             }
         }
     }
 
-    private void connect(Node first, Node second) {
+    private void connect(Node first, Node second, GridIndexer gridIndexer) {
         if (first == null || second == null) {
             return;
         }
         Edge edge = new Edge(
                 Map.entry(first, second),
                 getDistance(first.coordinates(), second.coordinates()),
-                List.of() // velocities ignored for now
+                getContinuousVelocities(first, second, gridIndexer)
         );
         first.edges().add(edge);
         second.edges().add(edge);
+    }
+
+    private List<ContinuousVelocity> getContinuousVelocities(Node first, Node second, GridIndexer gridIndexer) {
+        Point midPoint = getMiddle(first.coordinates(), second.coordinates());
+        SpatialVelocity spatialVelocity = gridIndexer.findContaining(midPoint);
+        if (spatialVelocity == null) {
+            return null;
+        }
+        return spatialVelocity.velocities();
+    }
+
+    private Point getMiddle(Point first, Point second) {
+        return new Point((first.lat() + second.lat()) / 2, (first.lon() + second.lon()) / 2);
     }
 
     private float getLatStep(Point point) {
