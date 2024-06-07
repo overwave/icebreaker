@@ -3,7 +3,7 @@ databaseChangeLog:
       file: table/user.sql
       relativeToChangelogFile: true
   - include:
-      file: table/reference_point.sql
+      file: table/navigation_point.sql
       relativeToChangelogFile: true
   - include:
       file: table/ship.sql

@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 --changeset author:lizunya ship_create_table
-CREATE TABLE IF NOT EXISTS session
+CREATE TABLE IF NOT EXISTS ship
 (
     id              BIGSERIAL PRIMARY KEY,
     name            TEXT NOT NULL,

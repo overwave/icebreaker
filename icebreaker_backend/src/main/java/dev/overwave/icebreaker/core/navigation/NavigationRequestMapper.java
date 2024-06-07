@@ -13,8 +13,8 @@ public class NavigationRequestMapper {
                 navigationRequest.getStartDate());
     }
 
-    public NavigationRequest toNavigationRequest(NavigationRequestDto dto, Ship ship, ReferencePoint startPoint,
-                                                 ReferencePoint finishPoint) {
+    public NavigationRequest toNavigationRequest(NavigationRequestDto dto, Ship ship, NavigationPoint startPoint,
+                                                 NavigationPoint finishPoint) {
         return new NavigationRequest(ship,
                 startPoint,
                 finishPoint,

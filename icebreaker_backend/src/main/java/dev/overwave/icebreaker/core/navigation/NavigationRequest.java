@@ -1,10 +1,17 @@
 package dev.overwave.icebreaker.core.navigation;
 
 import dev.overwave.icebreaker.core.database.LongId;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "navigation_request")
@@ -14,21 +21,17 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class NavigationRequest extends LongId {
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ship_id", nullable = false)
-    @ToString.Exclude
+    @ManyToOne
+    @JoinColumn(name = "ship_id")
     private Ship ship;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "start_point_id", nullable = false)
-    @ToString.Exclude
-    private ReferencePoint startPoint;
+    @ManyToOne
+    @JoinColumn(name = "start_point_id")
+    private NavigationPoint startPoint;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "finish_point_id", nullable = false)
-    @ToString.Exclude
-    private ReferencePoint finishPoint;
+    @ManyToOne
+    @JoinColumn(name = "finish_point_id")
+    private NavigationPoint finishPoint;
 
-    @JoinColumn(name = "start_date")
-    private LocalDateTime startDate;
+    private Instant startDate;
 }

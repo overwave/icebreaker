@@ -4,19 +4,20 @@ import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class NavigationRequestService {
     private final NavigationRequestRepository navigationRequestRepository;
+    NavigationRequestMapper navigationRequestMapper;
     private final ShipRepository shipRepository;
-    private final ReferencePointRepository referencePointRepository;
+    private final NavigationPointRepository navigationPointRepository;
 
-    public NavigationRequestDto saveNavigationRequest(NavigationRequestDto requestDto) {
-        Optional<Ship> optionalShip = shipRepository.findById(requestDto.shipId());
-        Optional<ReferencePoint> optionalStartPoint = referencePointRepository.findById(requestDto.startPointId());
-        Optional<ReferencePoint> optionalFinishPoint = referencePointRepository.findById(requestDto.finishPointId());
-        return null;
+    public void saveNavigationRequest(NavigationRequestDto requestDto) {
+        Ship ship = shipRepository.findByIdOrThrow(requestDto.shipId());
+        NavigationPoint startPoint = navigationPointRepository.findByIdOrThrow(requestDto.startPointId());
+        NavigationPoint finishPoint = navigationPointRepository.findByIdOrThrow(requestDto.finishPointId());
+        NavigationRequest navigationRequest = navigationRequestMapper.toNavigationRequest(requestDto, ship,
+                startPoint, finishPoint);
+        navigationRequestRepository.save(navigationRequest);
     }
 }

@@ -4,7 +4,7 @@ import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
-import dev.overwave.icebreaker.core.navigation.ReferencePoint;
+import dev.overwave.icebreaker.core.navigation.NavigationPoint;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class XlsxParserTest {
-    private final XlsxParser xlsxParser = new XlsxParser();
     private final Instant date1 = Instant.parse("2020-03-03T00:00:00Z");
     private final Instant date2 = Instant.parse("2020-03-10T00:00:00Z");
     private final Interval interval1 = new Interval(date1, Duration.ofDays(7));
@@ -41,8 +40,8 @@ class XlsxParserTest {
 
     @Test
     void testParseIntegralVelocityTable() {
-        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityTable("src/test/resources/IntegrVelocityTest" +
-                ".xlsx");
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable(
+                "src/test/resources/IntegrVelocityTest.xlsx");
 
         assertThat(matrix).hasSize(2);
         assertThat(matrix.getFirst()).hasSize(2);
@@ -56,16 +55,16 @@ class XlsxParserTest {
 
     @Test
     void testParseRosatomIntegrVelocityTable() {
-        List<List<RawVelocity>> matrix = xlsxParser.parseIntegralVelocityTable("src/test/resources/IntegrVelocity" +
-                ".xlsx");
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable(
+                "src/test/resources/IntegrVelocity.xlsx");
 
         assertThat(matrix.getFirst().getFirst().velocities()).hasSize(14);
     }
 
     @Test
-    void testParseReferencePointsTable() {
-        List<ReferencePoint> points = xlsxParser.parseReferencePointsTable("src/test/resources/ГрафДанные" +
-                ".xlsx");
+    void testParseNavigationPointsTable() {
+        List<NavigationPoint> points = XlsxParser.parseNavigationPointsTable(
+                "src/test/resources/ГрафДанные.xlsx");
 
         assertThat(points).hasSize(47);
     }

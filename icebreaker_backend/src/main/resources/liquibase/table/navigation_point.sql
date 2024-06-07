@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
---changeset author:lizunya_reference_point_create_table
-CREATE TABLE IF NOT EXISTS reference_point
+--changeset author:lizunya_navigation_point_create_table
+CREATE TABLE IF NOT EXISTS navigation_point
 (
     id       BIGSERIAL PRIMARY KEY,
     name     TEXT NOT NULL,

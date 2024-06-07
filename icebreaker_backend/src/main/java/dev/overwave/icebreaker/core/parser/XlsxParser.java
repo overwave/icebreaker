@@ -5,14 +5,14 @@ import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
-import dev.overwave.icebreaker.core.navigation.ReferencePoint;
+import dev.overwave.icebreaker.core.navigation.NavigationPoint;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.time.Duration;
@@ -20,7 +20,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@UtilityClass
 public class XlsxParser {
 
     @SneakyThrows
@@ -42,29 +42,29 @@ public class XlsxParser {
     }
 
     @SneakyThrows
-    public List<ReferencePoint> parseReferencePointsTable(String filename) {
+    public List<NavigationPoint> parseNavigationPointsTable(String filename) {
         OPCPackage pkg = OPCPackage.open(filename);
-        return doParseReferencePointsTable(pkg);
+        return doParseNavigationPointsTable(pkg);
     }
 
     @SneakyThrows
-    public List<ReferencePoint> parseReferencePointsTable(File file) {
+    public List<NavigationPoint> parseNavigationPointsTable(File file) {
         OPCPackage pkg = OPCPackage.open(file);
-        return doParseReferencePointsTable(pkg);
+        return doParseNavigationPointsTable(pkg);
     }
 
     @SneakyThrows
-    private static List<ReferencePoint> doParseReferencePointsTable(OPCPackage pkg) {
+    private static List<NavigationPoint> doParseNavigationPointsTable(OPCPackage pkg) {
         XSSFWorkbook workbook = new XSSFWorkbook(pkg);
         XSSFSheet pointsSheet = workbook.getSheet("points");
-        List<ReferencePoint> points = new ArrayList<>();
+        List<NavigationPoint> points = new ArrayList<>();
 
         for (int rowNum = 1; rowNum <= pointsSheet.getLastRowNum(); rowNum++) {
             XSSFRow row = pointsSheet.getRow(rowNum);
             float lat = (float) row.getCell(1).getNumericCellValue();
             float lon = (float) row.getCell(2).getNumericCellValue();
             String name = row.getCell(3).getStringCellValue();
-            ReferencePoint point = new ReferencePoint(name, lat, lon);
+            NavigationPoint point = new NavigationPoint(name, lat, lon);
             points.add(point);
         }
         return points;
