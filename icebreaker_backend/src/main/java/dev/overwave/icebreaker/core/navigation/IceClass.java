@@ -1,63 +1,51 @@
 package dev.overwave.icebreaker.core.navigation;
 
+import lombok.RequiredArgsConstructor;
+
 import java.util.Map;
 import java.util.Map.Entry;
 
+@RequiredArgsConstructor
 public enum IceClass {
-    ICE_0_3(IceClassCharacteristics.builder()
-            .middleIce(Map.entry(MovementType.FOLLOWING, 0.15F))
-            .heavyIce(Map.entry(MovementType.FORBIDDEN, 0F))
-            .icebreaker(false)
-            .build()),
-    ARC_4_6(IceClassCharacteristics.builder()
-            .middleIce(Map.entry(MovementType.FOLLOWING, 0.6F))
-            .heavyIce(Map.entry(MovementType.FOLLOWING, 0.15F))
-            .icebreaker(false)
-            .build()),
-    ARC_7(IceClassCharacteristics.builder()
-            .middleIce(Map.entry(MovementType.INDEPENDENT, 0.6F))
-            .heavyIce(Map.entry(MovementType.FOLLOWING, 0.7F))
-            .icebreaker(false)
-            .build()),
-    ARC_9_50_YEARS_OF_VICTORY_YAMAL(IceClassCharacteristics.builder()
-            .middleIce(Map.entry(MovementType.INDEPENDENT, 1F))
-            .heavyIce(Map.entry(MovementType.INDEPENDENT, 1F))
-            .icebreaker(true)
-            .build()),
-    ARC_9_TAIMIR_VAIGACH(IceClassCharacteristics.builder()
-            .middleIce(Map.entry(MovementType.INDEPENDENT, 0.9F))
-            .heavyIce(Map.entry(MovementType.INDEPENDENT, 0.75F))
-            .icebreaker(true)
-            .build());
+    ICE_0_3(
+            Map.entry(MovementType.FOLLOWING, 0.15F),
+            Map.entry(MovementType.FORBIDDEN, 0F),
+            false),
+    ARC_4_6(
+            Map.entry(MovementType.FOLLOWING, 0.6F),
+            Map.entry(MovementType.FOLLOWING, 0.15F),
+            false),
+    ARC_7(
+            Map.entry(MovementType.INDEPENDENT, 0.6F),
+            Map.entry(MovementType.FOLLOWING, 0.7F),
+            false),
+    ARC_9_TAIMIR_VAIGACH(
+            Map.entry(MovementType.INDEPENDENT, 0.9F),
+            Map.entry(MovementType.INDEPENDENT, 0.75F),
+            true),
+    ARC_9_50_YEARS_OF_VICTORY_YAMAL(
+            Map.entry(MovementType.INDEPENDENT, 1F),
+            Map.entry(MovementType.INDEPENDENT, 1F),
+            true);
 
-
-    private final IceClassCharacteristics iceClassCharacteristics;
-
-    IceClass(IceClassCharacteristics iceClassCharacteristics) {
-        this.iceClassCharacteristics = iceClassCharacteristics;
-    }
+    private final Entry<MovementType, Float> medium;
+    private final Entry<MovementType, Float> hard;
+    private final boolean icebreaker;
 
     public Entry<MovementType, Float> getCharacteristics(float integralVelocity, float speed) {
         Entry<MovementType, Float> characteristics;
-        boolean pureWater = false;
-
         if (integralVelocity >= 20) {
-            characteristics = Map.entry(MovementType.INDEPENDENT, 1F);
-            pureWater = true;
+            return Map.entry(MovementType.INDEPENDENT, speed);
         } else if (integralVelocity >= 15) {
-            characteristics = iceClassCharacteristics.getMiddleIce();
+            characteristics = medium;
         } else {
-            characteristics = iceClassCharacteristics.getHeavyIce();
+            characteristics = hard;
         }
 
-        if (iceClassCharacteristics.isIcebreaker()) {
-            if (pureWater) {
-                return Map.entry(characteristics.getKey(), speed);
-            }
+        if (icebreaker) {
             return Map.entry(characteristics.getKey(), integralVelocity * characteristics.getValue());
         } else {
             return Map.entry(characteristics.getKey(), speed * characteristics.getValue());
         }
     }
-
 }
