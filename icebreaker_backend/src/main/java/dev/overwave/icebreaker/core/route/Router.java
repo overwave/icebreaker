@@ -1,4 +1,4 @@
-package dev.overwave.icebreaker.core.a_star;
+package dev.overwave.icebreaker.core.route;
 
 import dev.overwave.icebreaker.core.geospatial.Edge;
 import dev.overwave.icebreaker.core.geospatial.Interval;
@@ -36,54 +36,41 @@ public class Router {
         PriorityQueue<Entry<Node, Integer>> queue = new PriorityQueue<>(Comparator.comparingInt(Entry::getValue));
         queue.add(Map.entry(from, 0));
 
-        Map<Node, Entry<Node, Float>> cameFromWithSpeed = new HashMap<>();
-        cameFromWithSpeed.put(from, null);
-
-        Map<Node, Integer> costSoFarMinutes = new HashMap<>();
-        costSoFarMinutes.put(from, 0);
+        Map<Node, RouteSegment> routeSegments = new HashMap<>();
+        routeSegments.put(from, new RouteSegment(null, 0, ship.getSpeed()));
 
         while (!queue.isEmpty()) {
             Node current = queue.poll().getKey();
             if (current.coordinates().equals(to.coordinates())) {
-                return Optional.of(buildRoute(startDate, cameFromWithSpeed, current));
+                return Optional.of(buildRoute(startDate, routeSegments, current));
             }
             for (Edge nextEdge : current.edges()) {
                 float speedMpm = getSpeedMpm(ship, nextEdge.velocities().getFirst().velocity());
                 int edgeTravelTime = (int) (nextEdge.distance() / speedMpm);
-                int newCost = costSoFarMinutes.get(current) + edgeTravelTime;
+                int segmentDuration = routeSegments.get(current).durationMinutes() + edgeTravelTime;
                 Node nextNode = nextEdge.getOther(current);
-                Integer nextNodeCost = costSoFarMinutes.get(nextNode);
-                if (nextNodeCost == null || newCost < nextNodeCost) {
-                    costSoFarMinutes.put(nextNode, newCost);
+                RouteSegment nextSegment = routeSegments.get(nextNode);
+                if (nextSegment == null || nextSegment.durationMinutes() > segmentDuration) {
                     int remainingTravelTime =
                             (int) (GraphFactory.getDistance(current.coordinates(), to.coordinates()) / speedMpm);
-                    queue.add(Map.entry(nextNode, newCost + remainingTravelTime));
-                    cameFromWithSpeed.put(nextNode, Map.entry(current, speedMpm));
+                    queue.add(Map.entry(nextNode, segmentDuration + remainingTravelTime));
+                    routeSegments.put(nextNode, new RouteSegment(current, segmentDuration, speedMpm));
                 }
             }
         }
         return Optional.empty();
     }
 
-//    private float estimatedTravelTime(Node to, Node nextNode) {
-//        return GraphFactory.getDistance(to.coordinates(), nextNode.coordinates());
-//    }
-
-    private Route buildRoute(Instant startDate, Map<Node, Entry<Node, Float>> cameFromWithSpeed, Node node) {
+    private Route buildRoute(Instant startDate, Map<Node, RouteSegment> routeSegments, Node node) {
         List<Node> route = new LinkedList<>();
         float distance = 0;
-        int timeInMinutes = 0;
+        int timeInMinutes = routeSegments.get(node).durationMinutes();
         Node cursor = node;
-        while (true) {
-            float currentDistance = GraphFactory.getDistance(cursor.coordinates(),
-                    cameFromWithSpeed.get(cursor).getKey().coordinates());
-            distance += currentDistance;
-            timeInMinutes += (int) (currentDistance / cameFromWithSpeed.get(cursor).getValue());
+        while (cursor != null) {
+            Node previous = routeSegments.get(cursor).previous();
+            distance += GraphFactory.getDistance(cursor.coordinates(), previous.coordinates());
             route.add(cursor);
-            if(cameFromWithSpeed.get(cursor) == null) {
-                break;
-            }
-            cursor = cameFromWithSpeed.get(cursor).getKey();
+            cursor = previous;
         }
         return new Route(new Interval(startDate, Duration.ofMinutes(timeInMinutes)), route.reversed(), distance);
     }

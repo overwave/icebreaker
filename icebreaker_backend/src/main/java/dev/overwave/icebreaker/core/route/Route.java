@@ -1,4 +1,4 @@
-package dev.overwave.icebreaker.core.a_star;
+package dev.overwave.icebreaker.core.route;
 
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Node;
