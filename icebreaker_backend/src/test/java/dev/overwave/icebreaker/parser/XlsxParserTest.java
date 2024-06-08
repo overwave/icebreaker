@@ -6,6 +6,7 @@ import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
 import dev.overwave.icebreaker.core.navigation.NavigationPoint;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
+import dev.overwave.icebreaker.util.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -61,8 +62,7 @@ class XlsxParserTest {
 
     @Test
     void testParseNavigationPointsTable() {
-        List<NavigationPoint> points = XlsxParser.parseNavigationPointsTable(
-                "src/test/resources/ГрафДанные.xlsx");
+        List<NavigationPoint> points = XlsxParser.parseNavigationPointsTable(FileUtils.fromClassPath("/ГрафДанные.xlsx"));
 
         assertThat(points).hasSize(47);
     }
