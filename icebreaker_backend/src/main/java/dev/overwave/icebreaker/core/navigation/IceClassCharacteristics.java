@@ -8,8 +8,7 @@ import java.util.Map.Entry;
 @Builder
 @Getter
 public class IceClassCharacteristics {
-    private Entry<MovementType, Float> characteristics1;
-    private Entry<MovementType, Float> characteristics2;
-    private Entry<MovementType, Float> characteristics3;
+    private Entry<MovementType, Float> middleIce;
+    private Entry<MovementType, Float> heavyIce;
     private boolean icebreaker;
 }
