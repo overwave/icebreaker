@@ -133,7 +133,7 @@ public class GraphFactory {
         return testStep * GraphFactory.BASE_EDGE_LENGTH / distance;
     }
 
-    float getDistance(Point from, Point to) {
+    public float getDistance(Point from, Point to) {
         if (DISABLE_LRU) {
             GeodesicLine line = Geodesic.WGS84.InverseLine(from.lat(), from.lon(), to.lat(), to.lon(),
                     GeodesicMask.DISTANCE_IN | GeodesicMask.LATITUDE | GeodesicMask.LONGITUDE);

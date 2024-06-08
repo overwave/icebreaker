@@ -8,11 +8,15 @@ public record Edge(
         float distance,
         List<ContinuousVelocity> velocities
 ) {
+    public Node getOther(Node current) {
+        return nodes.getKey().equals(current) ? nodes.getValue() : nodes.getKey();
+    }
+
     @Override
     public String toString() {
         return "Edge{" +
-               "distance=" + distance +
-               ", velocities=" + velocities +
-               '}';
+                "distance=" + distance +
+                ", velocities=" + velocities +
+                '}';
     }
 }
