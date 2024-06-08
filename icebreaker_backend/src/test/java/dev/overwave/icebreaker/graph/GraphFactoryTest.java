@@ -12,14 +12,16 @@ import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.graph.SparseList;
 import dev.overwave.icebreaker.core.map.Mercator;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
+import dev.overwave.icebreaker.util.FileUtils;
+import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +39,7 @@ public class GraphFactoryTest {
         List<SparseList<Node>> sparseLists = graph.getGraph();
         List<ContinuousVelocity> vvv = sparseLists.getFirst().getContent().get(100).edges().getFirst().velocities();
         for (int vv = 0; vv < 1; vv++) {
-            BufferedImage image = ImageIO.read(fromClassPath());
+            BufferedImage image = ImageIO.read(FileUtils.fromClassPath("/mercator.png"));
             Graphics2D graphics2D = image.createGraphics();
             for (SparseList<Node> nodes : sparseLists) {
                 for (Node node : nodes.getContent()) {
@@ -91,14 +93,10 @@ public class GraphFactoryTest {
         }
     }
 
-    private static InputStream fromClassPath() {
-        return GraphFactoryTest.class.getResourceAsStream("/mercator.png");
-    }
-
     @Test
     @SneakyThrows
     void renderUniformGrid() {
-        BufferedImage image = ImageIO.read(fromClassPath());
+        BufferedImage image = ImageIO.read(FileUtils.fromClassPath("/mercator.png"));
         Graphics2D graphics2D = image.createGraphics();
         graphics2D.setColor(Color.YELLOW);
         graphics2D.setStroke(new BasicStroke(3));
@@ -147,7 +145,7 @@ public class GraphFactoryTest {
     @Test
     @SneakyThrows
     void renderRosatom() {
-        BufferedImage image = ImageIO.read(fromClassPath());
+        BufferedImage image = ImageIO.read(FileUtils.fromClassPath("/mercator.png"));
         Graphics2D graphics2D = image.createGraphics();
         graphics2D.setStroke(new BasicStroke(15));
         float maxLat = 0;
@@ -186,7 +184,7 @@ public class GraphFactoryTest {
     @Test
     @SneakyThrows
     void renderRosatom2() {
-        BufferedImage image = ImageIO.read(fromClassPath());
+        BufferedImage image = ImageIO.read(FileUtils.fromClassPath("/mercator.png"));
         Graphics2D graphics2D = image.createGraphics();
         graphics2D.setStroke(new BasicStroke(0));
         graphics2D.setBackground(Color.BLUE);

@@ -3,15 +3,16 @@ package dev.overwave.icebreaker.api.navigation;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestService;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 
 @RestController
@@ -21,17 +22,18 @@ public class NavigationRequestController {
     private final NavigationPointService navigationPointService;
     private final NavigationRequestService navigationRequestService;
 
-    @GetMapping("/reference-points")
+    @GetMapping("/navigation-points")
     public List<NavigationPointDto> getNavigationPoints() {
         return navigationPointService.getNavigationPoints();
     }
 
-    @PutMapping("/reference-points")
-    public void resetNavigationPoints(@RequestBody File file) {
-        navigationPointService.resetNavigationPoints(file);
+    @SneakyThrows
+    @PutMapping("/navigation-points")
+    public void resetNavigationPoints(@RequestParam MultipartFile file) {
+        navigationPointService.resetNavigationPoints(file.getInputStream());
     }
 
-    @PostMapping("/request")
+    @PutMapping("/request")
     public void addNavigationRequest(@RequestBody NavigationRequestDto requestDto) {
         navigationRequestService.saveNavigationRequest(requestDto);
     }

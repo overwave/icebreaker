@@ -5,13 +5,17 @@ import dev.overwave.icebreaker.core.parser.XlsxParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class NavigationPointService {
     private final NavigationPointRepository navigationPointRepository;
+    private final NavigationRouteRepository navigationRouteRepository;
     private final NavigationPointMapper mapper;
 
     public List<NavigationPointDto> getNavigationPoints() {
@@ -21,9 +25,19 @@ public class NavigationPointService {
                 .toList();
     }
 
-    public void resetNavigationPoints(File file) {
-        List<NavigationPoint> points = XlsxParser.parseNavigationPointsTable(file);
+    public void resetNavigationPoints(InputStream inputStream) {
+        List<NavigationPoint> unsavedPoints = XlsxParser.parseNavigationPointsTable(inputStream);
         navigationPointRepository.deleteAll();
-        navigationPointRepository.saveAll(points);
+        navigationRouteRepository.deleteAll();
+        List<NavigationPoint> points = navigationPointRepository.saveAllAndFlush(unsavedPoints);
+        Map<Integer, NavigationPoint> pointByExternalId = points.stream()
+                .collect(Collectors.toMap(NavigationPoint::getExternalId, Function.identity()));
+
+        List<NavigationRoute> navigationRoutes = unsavedPoints.stream().flatMap(point -> point.getRoutes1().stream()).toList();
+        for (NavigationRoute route : navigationRoutes) {
+            route.setPoint1(pointByExternalId.get(route.getPoint1().getExternalId()));
+            route.setPoint2(pointByExternalId.get(route.getPoint2().getExternalId()));
+        }
+        navigationRouteRepository.saveAllAndFlush(navigationRoutes);
     }
 }

@@ -9,3 +9,7 @@ CREATE TABLE IF NOT EXISTS ship
     speed           FLOAT NOT NULL,
     icebreaker      BOOLEAN NOT NULL
     );
+
+--changeset author:overwave_ship_speed_not_double
+ALTER TABLE ship
+    ALTER COLUMN speed TYPE FLOAT4;

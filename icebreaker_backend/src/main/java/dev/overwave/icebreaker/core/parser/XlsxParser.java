@@ -5,7 +5,9 @@ import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
+import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.navigation.NavigationPoint;
+import dev.overwave.icebreaker.core.navigation.NavigationRoute;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.openxml4j.opc.OPCPackage;
@@ -14,7 +16,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.File;
+import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,32 +46,52 @@ public class XlsxParser {
     }
 
     @SneakyThrows
-    public List<NavigationPoint> parseNavigationPointsTable(String filename) {
-        OPCPackage pkg = OPCPackage.open(filename);
-        return doParseNavigationPointsTable(pkg);
+    public List<NavigationPoint> parseNavigationPointsTable(InputStream inputStream) {
+        XSSFWorkbook workbook = new XSSFWorkbook(OPCPackage.open(inputStream));
+        List<NavigationPoint> points = getNavigationPoints(workbook.getSheet("points"));
+        addNavigationEdges(points, workbook.getSheet("edges"));
+        return points;
     }
 
-    @SneakyThrows
-    public List<NavigationPoint> parseNavigationPointsTable(File file) {
-        OPCPackage pkg = OPCPackage.open(file);
-        return doParseNavigationPointsTable(pkg);
-    }
-
-    @SneakyThrows
-    private static List<NavigationPoint> doParseNavigationPointsTable(OPCPackage pkg) {
-        XSSFWorkbook workbook = new XSSFWorkbook(pkg);
-        XSSFSheet pointsSheet = workbook.getSheet("points");
+    private static List<NavigationPoint> getNavigationPoints(XSSFSheet pointsSheet) {
         List<NavigationPoint> points = new ArrayList<>();
-
+        //  пропускаем шапку
         for (int rowNum = 1; rowNum <= pointsSheet.getLastRowNum(); rowNum++) {
             XSSFRow row = pointsSheet.getRow(rowNum);
+            int externalId = (int) row.getCell(0).getNumericCellValue();
             float lat = (float) row.getCell(1).getNumericCellValue();
             float lon = (float) row.getCell(2).getNumericCellValue();
             String name = row.getCell(3).getStringCellValue();
-            NavigationPoint point = new NavigationPoint(name, lat, lon);
-            points.add(point);
+            if ("Архангельск".equals(name)) {
+                lat = 64.95F;
+                lon = 40.0F;
+            } else if ("Дудинка".equals(name)) {
+                lat = 70.4F;
+                lon = 83.4F;
+            }
+            points.add(new NavigationPoint(externalId, name, lat, lon, new ArrayList<>(), new ArrayList<>()));
         }
         return points;
+    }
+
+    private void addNavigationEdges(List<NavigationPoint> points, XSSFSheet edgesSheet) {
+        //  пропускаем шапку
+        for (int rowNum = 1; rowNum <= edgesSheet.getLastRowNum(); rowNum++) {
+            XSSFRow row = edgesSheet.getRow(rowNum);
+            NavigationPoint startPoint = getPointById(points, row.getCell(1));
+            NavigationPoint endPoint = getPointById(points, row.getCell(2));
+            NavigationRoute route = new NavigationRoute(startPoint, endPoint, GraphFactory.getDistance(
+                    new Point(startPoint.getLat(), startPoint.getLon()),
+                    new Point(endPoint.getLat(), endPoint.getLon())
+            ));
+            startPoint.getRoutes1().add(route);
+            endPoint.getRoutes2().add(route);
+        }
+    }
+
+    private static NavigationPoint getPointById(List<NavigationPoint> points, XSSFCell cell) {
+        int pointId = (int) cell.getNumericCellValue();
+        return points.stream().filter(point -> point.getExternalId() == pointId).findFirst().orElseThrow();
     }
 
     private List<RawVelocity> getAllVelocitiesInSheetRow(XSSFWorkbook workbook, int rowNum) {
