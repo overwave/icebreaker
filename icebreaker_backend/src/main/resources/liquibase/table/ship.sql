@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS ship
     name            TEXT NOT NULL,
     ice_class       TEXT NOT NULL,
     speed           FLOAT NOT NULL,
-    is_icebreaker   BOOLEAN NOT NULL
+    icebreaker      BOOLEAN NOT NULL
     );

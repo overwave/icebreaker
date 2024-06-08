@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class NavigationRequestService {
     private final NavigationRequestRepository navigationRequestRepository;
-    NavigationRequestMapper navigationRequestMapper;
+    private final NavigationRequestMapper navigationRequestMapper;
     private final ShipRepository shipRepository;
     private final NavigationPointRepository navigationPointRepository;
 
