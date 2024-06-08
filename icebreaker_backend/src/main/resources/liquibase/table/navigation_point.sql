@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS navigation_point
     name     TEXT NOT NULL,
     lat      FLOAT NOT NULL,
     lon      FLOAT NOT NULL
-)
+);

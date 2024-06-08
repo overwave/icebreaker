@@ -13,7 +13,6 @@ import java.util.List;
 public class NavigationPointService {
     private final NavigationPointRepository navigationPointRepository;
     private final NavigationPointMapper mapper;
-    private final XlsxParser xlsxParser;
 
     public List<NavigationPointDto> getNavigationPoints() {
         List<NavigationPoint> points = navigationPointRepository.findAll();
@@ -23,7 +22,7 @@ public class NavigationPointService {
     }
 
     public void resetNavigationPoints(File file) {
-        List<NavigationPoint> points = xlsxParser.parseNavigationPointsTable(file);
+        List<NavigationPoint> points = XlsxParser.parseNavigationPointsTable(file);
         navigationPointRepository.deleteAll();
         navigationPointRepository.saveAll(points);
     }
