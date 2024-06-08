@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS navigation_request
     start_point_id  BIGINT NOT NULL REFERENCES navigation_point(id),
     finish_point_id BIGINT NOT NULL REFERENCES navigation_point(id),
     start_date      TIMESTAMPTZ NOT NULL
-)
+);
+
 --changeset author:lizunya_navigation_request_create_index
 CREATE INDEX IF NOT EXISTS navigation_request_start_point_id_idx ON navigation_request (start_point_id);
 CREATE INDEX IF NOT EXISTS navigation_request_finish_point_id_idx ON navigation_request (finish_point_id);

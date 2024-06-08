@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS user_
     name     TEXT NOT NULL,
     login    TEXT NOT NULL,
     password TEXT NOT NULL
-)
+);
