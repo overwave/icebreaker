@@ -5,6 +5,7 @@ import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
+import dev.overwave.icebreaker.core.navigation.NavigationPoint;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.openxml4j.opc.OPCPackage;
@@ -13,6 +14,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -24,7 +26,7 @@ import static java.util.Objects.requireNonNull;
 public class XlsxParser {
 
     @SneakyThrows
-    public List<List<RawVelocity>> parseIntegralVelocityOfIce(String filename) {
+    public List<List<RawVelocity>> parseIntegralVelocityTable(String filename) {
         OPCPackage pkg = OPCPackage.open(requireNonNull(XlsxParser.class.getResourceAsStream(filename)));
         XSSFWorkbook workbook = new XSSFWorkbook(pkg);
 
@@ -39,6 +41,35 @@ public class XlsxParser {
         }
         return matrix;
 
+    }
+
+    @SneakyThrows
+    public List<NavigationPoint> parseNavigationPointsTable(String filename) {
+        OPCPackage pkg = OPCPackage.open(filename);
+        return doParseNavigationPointsTable(pkg);
+    }
+
+    @SneakyThrows
+    public List<NavigationPoint> parseNavigationPointsTable(File file) {
+        OPCPackage pkg = OPCPackage.open(file);
+        return doParseNavigationPointsTable(pkg);
+    }
+
+    @SneakyThrows
+    private static List<NavigationPoint> doParseNavigationPointsTable(OPCPackage pkg) {
+        XSSFWorkbook workbook = new XSSFWorkbook(pkg);
+        XSSFSheet pointsSheet = workbook.getSheet("points");
+        List<NavigationPoint> points = new ArrayList<>();
+
+        for (int rowNum = 1; rowNum <= pointsSheet.getLastRowNum(); rowNum++) {
+            XSSFRow row = pointsSheet.getRow(rowNum);
+            float lat = (float) row.getCell(1).getNumericCellValue();
+            float lon = (float) row.getCell(2).getNumericCellValue();
+            String name = row.getCell(3).getStringCellValue();
+            NavigationPoint point = new NavigationPoint(name, lat, lon);
+            points.add(point);
+        }
+        return points;
     }
 
     private List<RawVelocity> getAllVelocitiesInSheetRow(XSSFWorkbook workbook, int rowNum) {

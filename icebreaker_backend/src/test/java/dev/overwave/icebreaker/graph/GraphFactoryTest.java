@@ -11,13 +11,11 @@ import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.graph.SparseList;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
-import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
@@ -33,7 +31,7 @@ public class GraphFactoryTest {
     @Test
     @SneakyThrows
     void testGraphGeneration() {
-        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityOfIce("/IntegrVelocity.xlsx");
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
 
         Graph graph = GraphFactory.buildWeightedGraph(spatialVelocities);
@@ -140,7 +138,7 @@ public class GraphFactoryTest {
         float maxLat = 0;
         float minLat = 90;
 
-        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityOfIce("/IntegrVelocity.xlsx");
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
         for (List<RawVelocity> velocities : matrix) {
             for (RawVelocity velocity : velocities) {
                 Entry<Double, Double> point = Mercator.pointToMercatorNormalized(velocity.coordinates());
@@ -178,7 +176,7 @@ public class GraphFactoryTest {
         graphics2D.setStroke(new BasicStroke(0));
         graphics2D.setBackground(Color.BLUE);
 
-        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityOfIce("/IntegrVelocity.xlsx");
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
         for (SpatialVelocity velocity : spatialVelocities) {
             float v = velocity.velocities().getFirst().velocity();
