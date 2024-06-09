@@ -8,12 +8,12 @@ import java.util.List;
 public record UserDetailsDto(
         String login,
         String password,
-        List<GrantedAuthority> authorities
+        List<UserRole> roles
 ) implements UserDetails {
 
     @Override
-    public List<GrantedAuthority> getAuthorities() {
-        return authorities;
+    public List<? extends GrantedAuthority> getAuthorities() {
+        return roles;
     }
 
     @Override

@@ -8,3 +8,7 @@ CREATE TABLE IF NOT EXISTS user_
     login    TEXT NOT NULL,
     password TEXT NOT NULL
 );
+
+--changeset author:overwave_user_role
+ALTER TABLE user_
+    ADD COLUMN IF NOT EXISTS roles TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
