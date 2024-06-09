@@ -179,24 +179,24 @@ public class GraphFactoryTest {
     @SneakyThrows
     void renderRosatom2() {
         BufferedImage image = ImageIO.read(FileUtils.fromClassPath("/mercator.png"));
-        Graphics2D graphics2D = image.createGraphics();
-        graphics2D.setStroke(new BasicStroke(0));
-        graphics2D.setBackground(Color.BLUE);
+        Graphics2D graphics = image.createGraphics();
+        graphics.setStroke(new BasicStroke(0));
+        graphics.setBackground(Color.BLUE);
 
         List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
         for (SpatialVelocity velocity : spatialVelocities) {
             float v = velocity.velocities().getFirst().velocity();
             if (v < 0) {
-                graphics2D.setColor(Color.GRAY);
+                graphics.setColor(new Color(73, 73, 73, 202));
             } else if (v < 10) {
-                graphics2D.setColor(Color.RED);
+                graphics.setColor(new Color(255, 77, 77, 77));
             } else if (v < 14.5F) {
-                graphics2D.setColor(Color.ORANGE);
+                graphics.setColor(new Color(255, 128, 0, 77));
             } else if (v < 19.5F) {
-                graphics2D.setColor(Color.YELLOW);
+                graphics.setColor(new Color(255, 255, 0, 77));
             } else {
-                graphics2D.setColor(Color.GREEN);
+                graphics.setColor(new Color(20, 255, 194, 77));
             }
 
             List<Entry<Double, Double>> coords = Stream.of(velocity.topLeft(), velocity.topRight(),
@@ -215,13 +215,24 @@ public class GraphFactoryTest {
                     (int) (coords.get(2).getValue() * image.getWidth()),
                     (int) (coords.get(3).getValue() * image.getWidth()),
             };
-            graphics2D.fillPolygon(x, y, 4);
+            graphics.fillPolygon(x, y, 4);
             x[0] -= image.getHeight();
             x[1] -= image.getHeight();
             x[2] -= image.getHeight();
             x[3] -= image.getHeight();
-            graphics2D.fillPolygon(x, y, 4);
+            graphics.fillPolygon(x, y, 4);
         }
+
+
+        Entry<Double, Double> dudinka = Mercator.pointToMercatorNormalized(new Point(69.4F,	86.15F));
+        graphics.setColor(Color.RED);
+        graphics.setStroke(new BasicStroke(7));
+        graphics.drawLine(
+                (int) (dudinka.getKey() * image.getWidth()),
+                (int) (dudinka.getValue() * image.getHeight()),
+                (int) (dudinka.getKey() * image.getWidth()),
+                (int) (dudinka.getValue() * image.getHeight())
+        );
 
         ImageIO.write(image, "PNG", new File("mercator_velocity_spatial.png"));
     }
