@@ -1,55 +1,24 @@
 package dev.overwave.icebreaker.core.ship;
 
-import dev.overwave.icebreaker.core.navigation.MovementType;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
+@Getter
 @RequiredArgsConstructor
 public enum IceClass {
-    ICE_0_3(
-            Map.entry(MovementType.FOLLOWING, 0.15F),
-            Map.entry(MovementType.FORBIDDEN, 0F),
-            false),
-    ARC_4_6(
-            Map.entry(MovementType.FOLLOWING, 0.6F),
-            Map.entry(MovementType.FOLLOWING, 0.15F),
-            false),
-    ARC_7(
-            Map.entry(MovementType.INDEPENDENT, 0.6F),
-            Map.entry(MovementType.FOLLOWING, 0.7F),
-            false),
-    ARC_9_TAIMIR_VAIGACH(
-            Map.entry(MovementType.INDEPENDENT, 0.9F),
-            Map.entry(MovementType.INDEPENDENT, 0.75F),
-            true),
-    ARC_9_50_YEARS_OF_VICTORY_YAMAL(
-            Map.entry(MovementType.INDEPENDENT, 1F),
-            Map.entry(MovementType.INDEPENDENT, 1F),
-            true);
+    NO_ICE(IceClassGroup.ICE_0_3),
+    ICE_1(IceClassGroup.ICE_0_3),
+    ICE_2(IceClassGroup.ICE_0_3),
+    ICE_3(IceClassGroup.ICE_0_3),
+    ARC_3(IceClassGroup.ARC_4_6),
+    ARC_4(IceClassGroup.ARC_4_6),
+    ARC_5(IceClassGroup.ARC_4_6),
+    ARC_6(IceClassGroup.ARC_4_6),
+    ARC_7(IceClassGroup.ARC_4_6),
+    ARC_8(IceClassGroup.ARC_4_6),
+    ARC_9_TAIMIR_VAIGACH(IceClassGroup.ARC_9_TAIMIR_VAIGACH),
+    ARC_9_50_YEARS_OF_VICTORY_YAMAL(IceClassGroup.ARC_9_50_YEARS_OF_VICTORY_YAMAL),
+    ;
 
-    private final Entry<MovementType, Float> medium;
-    private final Entry<MovementType, Float> hard;
-    private final boolean icebreaker;
-
-    public Entry<MovementType, Float> getCharacteristics(float integralVelocity, float speed) {
-        if (integralVelocity < 10) {
-            return Map.entry(MovementType.FORBIDDEN, 0F);
-        }
-        Entry<MovementType, Float> characteristics;
-        if (integralVelocity >= 20) {
-            return Map.entry(MovementType.INDEPENDENT, speed);
-        } else if (integralVelocity >= 15) {
-            characteristics = medium;
-        } else {
-            characteristics = hard;
-        }
-
-        if (icebreaker) {
-            return Map.entry(characteristics.getKey(), integralVelocity * characteristics.getValue());
-        } else {
-            return Map.entry(characteristics.getKey(), speed * characteristics.getValue());
-        }
-    }
+    private final IceClassGroup group;
 }
