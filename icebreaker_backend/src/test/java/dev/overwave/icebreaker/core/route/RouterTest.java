@@ -62,7 +62,7 @@ class RouterTest {
         Point from2 = new Point(69.5F, 33.75F);
         Point to2 = new Point(76.2F, 58.3F);
         Instant startDate = Instant.parse("2020-04-05T00:00:00Z");
-        Ship ship = new Ship("Ship", IceClass.ARC_4_6, 16F, false, null);
+        Ship ship = new Ship("Ship", IceClass.ARC_5, 16F, false, null);
 
         Optional<Route> route3 = Router.createRoute(from2, to2, startDate, graph, ship);
         route3.ifPresent(value -> assertThat(value.interval().instant()).isBefore(Instant.parse("2020-04-10T00:00:00Z")));

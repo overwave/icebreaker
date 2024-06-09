@@ -1,6 +1,7 @@
 package dev.overwave.icebreaker.core.ship;
 
 import dev.overwave.icebreaker.core.navigation.MovementType;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
@@ -16,7 +17,7 @@ public enum IceClassGroup {
             Map.entry(MovementType.FOLLOWING, 0.6F),
             Map.entry(MovementType.FOLLOWING, 0.15F),
             false),
-    ARC_7(
+    ARC_7_8(
             Map.entry(MovementType.INDEPENDENT, 0.6F),
             Map.entry(MovementType.FOLLOWING, 0.7F),
             false),
@@ -31,6 +32,7 @@ public enum IceClassGroup {
 
     private final Entry<MovementType, Float> medium;
     private final Entry<MovementType, Float> hard;
+    @Getter
     private final boolean icebreaker;
 
     public Entry<MovementType, Float> getCharacteristics(float integralVelocity, float speed) {

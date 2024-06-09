@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -32,8 +33,14 @@ public class ShipController {
     }
 
     @GetMapping("/ice-classes")
-    public List<IceClass> getIceClasses() {
-        return List.of(IceClass.values());
+    public List<IceClassDto> getIceClasses() {
+        List<IceClassDto> result = new ArrayList<>();
+        for(IceClass iceClass: IceClass.values()) {
+            if(!iceClass.getGroup().isIcebreaker()) {
+                result.add(new IceClassDto(iceClass, iceClass.getDescription()));
+            }
+        }
+        return result;
     }
 
 }
