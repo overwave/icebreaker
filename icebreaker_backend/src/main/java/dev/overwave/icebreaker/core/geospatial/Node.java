@@ -8,6 +8,11 @@ public record Node(
         List<Edge> edges
 ) {
     @Override
+    public String toString() {
+        return "%.2f|%.2f|%d".formatted(coordinates.lat(), coordinates.lon(), edges.size());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Node node)) return false;

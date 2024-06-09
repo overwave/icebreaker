@@ -33,6 +33,9 @@ public enum IceClass {
     private final boolean icebreaker;
 
     public Entry<MovementType, Float> getCharacteristics(float integralVelocity, float speed) {
+        if (integralVelocity < 10) {
+            return Map.entry(MovementType.FORBIDDEN, 0F);
+        }
         Entry<MovementType, Float> characteristics;
         if (integralVelocity >= 20) {
             return Map.entry(MovementType.INDEPENDENT, speed);
