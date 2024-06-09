@@ -24,7 +24,9 @@ spring:
     static-path-pattern: /**
   web:
     resources:
-      static-locations: 'file:static'
+      static-locations:
+        - 'file:static'
+        - 'file:tiles'
       cache:
         cachecontrol:
           max-age: 1d
