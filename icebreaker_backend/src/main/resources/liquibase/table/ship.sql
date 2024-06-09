@@ -13,3 +13,7 @@ CREATE TABLE IF NOT EXISTS ship
 --changeset author:overwave_ship_speed_not_double
 ALTER TABLE ship
     ALTER COLUMN speed TYPE FLOAT4;
+
+--changeset author:overwave_ship_add_user_id
+ALTER TABLE ship
+    ADD COLUMN IF NOT EXISTS user_id BIGINT NOT NULL REFERENCES user_ (id) DEFAULT -1;

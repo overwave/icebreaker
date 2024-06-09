@@ -1,5 +1,6 @@
-package dev.overwave.icebreaker.core.navigation;
+package dev.overwave.icebreaker.core.ship;
 
+import dev.overwave.icebreaker.core.navigation.MovementType;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;

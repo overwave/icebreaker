@@ -1,6 +1,7 @@
 package dev.overwave.icebreaker.core.navigation;
 
 import dev.overwave.icebreaker.core.database.LongId;
+import dev.overwave.icebreaker.core.ship.Ship;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;

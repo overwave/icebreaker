@@ -41,7 +41,10 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(matcherRegistry ->
-                        matcherRegistry.requestMatchers("/icebreaker/api/user/me").authenticated()
+                        matcherRegistry.requestMatchers(
+                                "/icebreaker/api/user/me",
+                                "/icebreaker/api/ship/ships"
+                                ).authenticated()
                                 .anyRequest().permitAll()
                 )
                 .formLogin(loginConfigurer -> {

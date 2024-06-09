@@ -8,7 +8,7 @@ import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.graph.SparseList;
 import dev.overwave.icebreaker.core.navigation.MovementType;
-import dev.overwave.icebreaker.core.navigation.Ship;
+import dev.overwave.icebreaker.core.ship.Ship;
 import lombok.experimental.UtilityClass;
 
 import java.time.Duration;
