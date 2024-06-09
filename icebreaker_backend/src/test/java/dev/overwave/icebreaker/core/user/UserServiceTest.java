@@ -23,6 +23,6 @@ class UserServiceTest {
 
         UserDto userDto = userService.selfInfo("user");
         assertThat(userDto.login()).isEqualTo("user");
-        assertThat(userDto.roles()).containsExactly(UserRole.CAPTAIN);
+        assertThat(userDto.role()).isEqualTo(UserRole.CAPTAIN);
     }
 }
