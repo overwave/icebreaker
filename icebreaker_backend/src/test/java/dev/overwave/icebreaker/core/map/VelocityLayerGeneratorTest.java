@@ -11,8 +11,7 @@ import java.util.List;
 
 class VelocityLayerGeneratorTest {
 
-    @Test
-    @Disabled // requires 20+ Gb ram
+    @Test // consumes 4Gb heap
     void generateMapTiles() {
         List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
