@@ -7,12 +7,12 @@ import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.graph.SparseList;
+import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.Ship;
 import lombok.experimental.UtilityClass;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -45,7 +45,12 @@ public class Router {
                 return Optional.of(buildRoute(startDate, routeSegments, current));
             }
             for (Edge nextEdge : current.edges()) {
-                float speedMpm = getSpeedMpm(ship, nextEdge.velocities().getFirst().velocity());
+                float velocity = nextEdge.velocities().getFirst().velocity();
+                Entry<MovementType, Float> characteristics = getIceCharacteristics(ship, velocity);
+                if (characteristics.getKey() == MovementType.FORBIDDEN) {
+                    continue;
+                }
+                float speedMpm = characteristics.getValue() * KNOTS_TO_METER_PER_MINUTES;
                 int edgeTravelTime = (int) (nextEdge.distance() / speedMpm);
                 int segmentDuration = routeSegments.get(current).durationMinutes() + edgeTravelTime;
                 Node nextNode = nextEdge.getOther(current);
@@ -68,24 +73,21 @@ public class Router {
         Node cursor = node;
         while (cursor != null) {
             Node previous = routeSegments.get(cursor).previous();
-            distance += GraphFactory.getDistance(cursor.coordinates(), previous.coordinates());
+            if (previous != null) {
+                distance += GraphFactory.getDistance(cursor.coordinates(), previous.coordinates());
+            }
             route.add(cursor);
             cursor = previous;
         }
         return new Route(new Interval(startDate, Duration.ofMinutes(timeInMinutes)), route.reversed(), distance);
     }
 
-    private int getTravelMinutes(Edge edge, Ship ship) {
-        return (int) (edge.distance() / getSpeedMpm(ship, edge.velocities().getFirst().velocity()));
-    }
-
-    private static float getSpeedMpm(Ship ship, float integralVelocity) {
-        return ship.getIceClass().getCharacteristics(integralVelocity, ship.getSpeed()).getValue() *
-                KNOTS_TO_METER_PER_MINUTES;
+    private static Entry<MovementType, Float> getIceCharacteristics(Ship ship, float integralVelocity) {
+        return ship.getIceClass().getCharacteristics(integralVelocity, ship.getSpeed());
     }
 
     private List<Node> findClosestNodes(List<SparseList<Node>> graphList, Point... points) {
-        List<Node> result = new ArrayList<>();
+        List<Node> result = Arrays.asList(new Node[points.length]);
         float[] minDistance = new float[points.length];
         Arrays.fill(minDistance, Float.MAX_VALUE);
 

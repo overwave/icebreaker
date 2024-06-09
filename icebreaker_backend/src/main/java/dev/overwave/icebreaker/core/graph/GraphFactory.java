@@ -25,7 +25,7 @@ public class GraphFactory {
     public static final float MAX_LATITUDE = 84F;
     public static final float MIN_LONGITUDE = 20F;
     public static final float MAX_LONGITUDE = 200F;
-    private static final float BASE_EDGE_LENGTH = 10_000F; // 1 km
+    private static final float BASE_EDGE_LENGTH = 4_000F; // 1 km
     private static final boolean DISABLE_LRU = true;
 
     private static final LruCache<Entry<Point, Point>, Float> DISTANCE_CACHE = new LruCache<>(10);

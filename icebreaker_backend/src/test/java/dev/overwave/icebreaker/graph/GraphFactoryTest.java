@@ -148,8 +148,6 @@ public class GraphFactoryTest {
         BufferedImage image = ImageIO.read(FileUtils.fromClassPath("/mercator.png"));
         Graphics2D graphics2D = image.createGraphics();
         graphics2D.setStroke(new BasicStroke(15));
-        float maxLat = 0;
-        float minLat = 90;
 
         List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
         for (List<RawVelocity> velocities : matrix) {
@@ -157,10 +155,6 @@ public class GraphFactoryTest {
                 Entry<Double, Double> point = Mercator.pointToMercatorNormalized(velocity.coordinates());
                 int x = (int) (point.getKey() * image.getWidth()) % image.getWidth();
                 int y = (int) (point.getValue() * image.getHeight()) % image.getHeight();
-                if (velocity.velocities().stream().anyMatch(v -> v.velocity() >= 10)) {
-                    maxLat = Math.max(maxLat, velocity.coordinates().lat());
-                    minLat = Math.min(minLat, velocity.coordinates().lat());
-                }
                 float v = velocity.velocities().getFirst().velocity();
 
                 if (v < 0) {
