@@ -1,6 +1,5 @@
 package dev.overwave.icebreaker.core.user;
 
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
@@ -8,12 +7,12 @@ import java.util.List;
 public record UserDetailsDto(
         String login,
         String password,
-        List<UserRole> roles
+        UserRole role
 ) implements UserDetails {
 
     @Override
-    public List<? extends GrantedAuthority> getAuthorities() {
-        return roles;
+    public List<UserRole> getAuthorities() {
+        return List.of(role);
     }
 
     @Override

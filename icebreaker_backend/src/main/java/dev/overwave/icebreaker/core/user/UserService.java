@@ -17,7 +17,7 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String login) {
         User user = userRepository.findByLoginOrThrow(login);
-        return new UserDetailsDto(user.getLogin(), user.getPassword(), user.getRoles());
+        return new UserDetailsDto(user.getLogin(), user.getPassword(), user.getRole());
     }
 
     public void registerUser(String login, String password) {
@@ -28,12 +28,12 @@ public class UserService implements UserDetailsService {
                 .login(login)
                 .password(passwordEncoder.encode(password))
                 .name("Anonymous")
-                .roles(new UserRole[]{UserRole.CAPTAIN})
+                .role(UserRole.CAPTAIN)
                 .build());
     }
 
     public UserDto selfInfo(String login) {
         User user = userRepository.findByLoginOrThrow(login);
-        return new UserDto(user.getLogin(), user.getRoles());
+        return new UserDto(user.getLogin(), user.getRole());
     }
 }

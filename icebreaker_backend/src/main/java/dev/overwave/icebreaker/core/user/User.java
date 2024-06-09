@@ -1,9 +1,7 @@
 package dev.overwave.icebreaker.core.user;
 
-import com.vladmihalcea.hibernate.type.array.StringArrayType;
 import dev.overwave.icebreaker.core.database.LongId;
 import dev.overwave.icebreaker.core.ship.Ship;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -14,7 +12,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 
 import java.util.List;
 
@@ -33,16 +30,9 @@ public class User extends LongId {
 
     private String name;
 
-    @Type(StringArrayType.class)
     @Enumerated(EnumType.STRING)
-    @Column(name = "roles", columnDefinition = "TEXT[]")
-    private UserRole[] roles;
+    private UserRole role;
 
     @OneToMany(mappedBy = "user")
     private List<Ship> ships;
-
-
-    public List<UserRole> getRoles() {
-        return List.of(roles);
-    }
 }
