@@ -1,6 +1,7 @@
 package dev.overwave.icebreaker.core.navigation;
 
 import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
+import dev.overwave.icebreaker.core.ship.Ship;
 import org.springframework.stereotype.Component;
 
 @Component

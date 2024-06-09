@@ -1,4 +1,4 @@
-package dev.overwave.icebreaker.core.navigation;
+package dev.overwave.icebreaker.core.ship;
 
 import dev.overwave.icebreaker.core.exception.ShipNotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;

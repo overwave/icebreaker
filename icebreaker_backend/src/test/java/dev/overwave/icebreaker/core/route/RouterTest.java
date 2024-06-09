@@ -9,9 +9,9 @@ import dev.overwave.icebreaker.core.geospatial.SpatialVelocity;
 import dev.overwave.icebreaker.core.geospatial.SpatialVelocityFactory;
 import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.GraphFactory;
-import dev.overwave.icebreaker.core.navigation.IceClass;
+import dev.overwave.icebreaker.core.ship.IceClass;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
-import dev.overwave.icebreaker.core.navigation.Ship;
+import dev.overwave.icebreaker.core.ship.Ship;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
 import dev.overwave.icebreaker.util.FileUtils;
 import lombok.RequiredArgsConstructor;
@@ -47,13 +47,13 @@ class RouterTest {
         Point to = pointsByName.get("Мыс Желания");
 
         Route route = Router.createRoute(from, to, Instant.now(), graph,
-                new Ship("Плот", IceClass.ICE_0_3, 16, false)).orElseThrow();
+                new Ship("Плот", IceClass.ICE_0_3, 16, false, null)).orElseThrow();
         printRoute(route, "route_novaya_zemlya.json");
 
         from = pointsByName.get("Дудинка");
         to = pointsByName.get("Архангельск");
         Route route2 = Router.createRoute(from, to, Instant.now(), graph,
-                new Ship("Кобаблище", IceClass.ARC_7, 13, false)).orElseThrow();
+                new Ship("Кобаблище", IceClass.ARC_7, 13, false, null)).orElseThrow();
         printRoute(route2, "route_dudinka.json");
     }
 
