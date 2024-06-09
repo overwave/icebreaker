@@ -62,13 +62,6 @@ public class XlsxParser {
             float lat = (float) row.getCell(1).getNumericCellValue();
             float lon = (float) row.getCell(2).getNumericCellValue();
             String name = row.getCell(3).getStringCellValue();
-            if ("Архангельск".equals(name)) {
-                lat = 64.95F;
-                lon = 40.0F;
-            } else if ("Дудинка".equals(name)) {
-                lat = 70.4F;
-                lon = 83.4F;
-            }
             points.add(new NavigationPoint(externalId, name, lat, lon, new ArrayList<>(), new ArrayList<>()));
         }
         return points;
