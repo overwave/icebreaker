@@ -47,7 +47,7 @@ class RouterTest {
         Point to = pointsByName.get("Мыс Желания");
 
         Route route = Router.createRoute(from, to, Instant.now(), graph,
-                new Ship("Плот", IceClass.ICE_0_3, 16, false, null)).orElseThrow();
+                new Ship("Плот", IceClass.ICE_2, 16, false, null)).orElseThrow();
         printRoute(route, "route_novaya_zemlya.json");
 
         from = pointsByName.get("Дудинка");

@@ -83,7 +83,7 @@ public class Router {
     }
 
     private static Entry<MovementType, Float> getIceCharacteristics(Ship ship, float integralVelocity) {
-        return ship.getIceClass().getCharacteristics(integralVelocity, ship.getSpeed());
+        return ship.getIceClass().getGroup().getCharacteristics(integralVelocity, ship.getSpeed());
     }
 
     private List<Node> findClosestNodes(List<SparseList<Node>> graphList, Point... points) {
