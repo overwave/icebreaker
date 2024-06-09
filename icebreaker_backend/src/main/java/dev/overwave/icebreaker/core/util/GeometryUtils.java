@@ -6,7 +6,7 @@ import java.awt.*;
 import java.util.List;
 
 public class GeometryUtils {
-    private final static int ROUNDING = 1_000_000;
+    public final static int ROUNDING = 1_000_000;
 
     public static boolean polygonContains(List<Point> vertices, Point point) {
         int vertexNum = vertices.size();

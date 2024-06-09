@@ -28,7 +28,8 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8081", "https://overwave.dev"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8090",
+                "https://overwave.dev"));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -56,7 +57,7 @@ public class SecurityConfiguration {
                 })
                 .exceptionHandling(configurer -> configurer.authenticationEntryPoint(
                         (request, response, authException) -> response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)))
-//              .cors(i -> {})
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .logout(logoutConfigurer -> {
                     logoutConfigurer.logoutUrl("/icebreaker/api/user/logout");
                     logoutConfigurer.deleteCookies("JSESSIONID");
