@@ -1,5 +1,6 @@
 package dev.overwave.icebreaker.api.ship;
 
+import dev.overwave.icebreaker.core.ship.IceClass;
 import dev.overwave.icebreaker.core.ship.ShipService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -29,4 +30,10 @@ public class ShipController {
     public ShipDto createShip(@RequestBody ShipCreateRequest ship, Principal principal) {
         return shipService.createShip(ship, principal.getName());
     }
+
+    @GetMapping("/ice-classes")
+    public List<IceClass> getIceClasses() {
+        return List.of(IceClass.values());
+    }
+
 }
