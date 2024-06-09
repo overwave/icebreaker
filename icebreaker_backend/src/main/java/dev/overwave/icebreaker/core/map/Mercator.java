@@ -10,12 +10,12 @@ import java.util.Map.Entry;
 public class Mercator {
     private static final double EPS = 0.0818191908426D;
 
-    public Entry<Long, Long> pointToMercator(Point point, int zoom) {
+    public Entry<Integer, Integer> pointToMercator(Point point, int zoom) {
         Entry<Double, Double> normalized = pointToMercatorNormalized(point);
         int scale = 2 << zoom + 7; // zoom 0 -> 256, zoom 1 -> 512
         return Map.entry(
-                (long) (normalized.getKey() * scale),
-                (long) (normalized.getValue() * scale)
+                (int) (normalized.getKey() * scale),
+                (int) (normalized.getValue() * scale)
         );
     }
 

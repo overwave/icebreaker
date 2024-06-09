@@ -30,10 +30,11 @@ public class VelocityLayerGenerator {
 
     private static final int ZOOM_FROM = 3;
     private static final int ZOOM_TO = 9;
+    private static final int THREADS = 128;
 
     @SneakyThrows
     public void generateMapTiles(List<SpatialVelocity> spatialVelocities) {
-        ExecutorService threadPool = Executors.newFixedThreadPool(128);
+        ExecutorService threadPool = Executors.newFixedThreadPool(THREADS);
         List<ContinuousVelocity> velocities = spatialVelocities.getFirst().velocities();
         List<CompletableFuture<?>> futures = new ArrayList<>();
 
@@ -41,11 +42,11 @@ public class VelocityLayerGenerator {
             LocalDate date = velocities.get(dateIndex).interval().instant().atOffset(ZoneOffset.UTC).toLocalDate();
             for (int zoom = ZOOM_FROM; zoom <= ZOOM_TO; zoom++) {
                 // Y - вся карта в ширину
-                Map.Entry<Long, Long> from = Mercator.pointToMercator(new Point(MAX_LATITUDE, -180), zoom - 8);
-                Map.Entry<Long, Long> to = Mercator.pointToMercator(new Point(MIN_LATITUDE, 179.999F), zoom - 8);
+                Map.Entry<Integer, Integer> from = Mercator.pointToMercator(new Point(MAX_LATITUDE, -180), zoom - 8);
+                Map.Entry<Integer, Integer> to = Mercator.pointToMercator(new Point(MIN_LATITUDE, 179.999F), zoom - 8);
 
-                for (long x = from.getKey(); x <= to.getKey(); x++) {
-                    for (long y = from.getValue(); y <= to.getValue(); y++) {
+                for (int x = from.getKey(); x <= to.getKey(); x++) {
+                    for (int y = from.getValue(); y <= to.getValue(); y++) {
                         BufferedImage tile = new BufferedImage(TILE_SIZE, TILE_SIZE, BufferedImage.TYPE_INT_ARGB);
                         Graphics2D graphics = tile.createGraphics();
 
@@ -53,15 +54,20 @@ public class VelocityLayerGenerator {
                         int finalZoom = zoom;
                         long finalX = x;
                         long finalY = y;
-                        Thread.sleep(1);
+                        if (isEmptyArea(x * TILE_SIZE, y * TILE_SIZE, zoom)) {
+                            continue;
+                        }
                         futures.add(CompletableFuture.runAsync(() -> drawTile(spatialVelocities, finalDateIndex,
                                 graphics, finalZoom, finalX, finalY, tile, date), threadPool));
+                        if (futures.size() > THREADS) {
+                            CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).get();
+                            futures.clear();
+                        }
                     }
                 }
             }
         }
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
-        allFutures.get();
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).get();
     }
 
     @SneakyThrows
@@ -82,7 +88,7 @@ public class VelocityLayerGenerator {
             } else if (velocity < 19.5F) {
                 graphics.setColor(new Color(255, 255, 0, 77));
             } else {
-                continue;
+                graphics.setColor(new Color(20, 255, 194, 77));
             }
 
             int[] xPoints = new int[]{
@@ -108,12 +114,24 @@ public class VelocityLayerGenerator {
         }
     }
 
+    private boolean isEmptyArea(int tileX, int tileY, int zoom) {
+        int zoomTileSize = TILE_SIZE << zoom;
+        float normalizedY = (float) tileY / zoomTileSize;
+        if (normalizedY > 0.33F) {
+            // Убрал зону ниже Архангельска
+            return true;
+        }
+        float normalizedXStart = (float) tileX / zoomTileSize;
+        float normalizedXEnd = (float) (tileX + TILE_SIZE) / zoomTileSize;
+        // Убрал зону Америки
+        return normalizedXStart > 0.07F && normalizedXEnd < 0.52F;
+    }
+
     private boolean isDirty(BufferedImage image) {
-        for (int i = 0; i < image.getWidth(); i++) {
-            for (int k = 0; k < image.getHeight(); k++) {
-                if (image.getRGB(i, k) != 0) {
-                    return true;
-                }
+        int[] data = image.getData().getPixels(0, 0, TILE_SIZE, TILE_SIZE, (int[]) null);
+        for (int color : data) {
+            if (color != 0) {
+                return true;
             }
         }
         return false;
