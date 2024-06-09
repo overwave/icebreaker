@@ -8,8 +8,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
@@ -19,7 +17,7 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String login) {
         User user = userRepository.findByLoginOrThrow(login);
-        return new UserDetailsDto(user.getLogin(), user.getPassword(), List.of());
+        return new UserDetailsDto(user.getLogin(), user.getPassword(), user.getRoles());
     }
 
     public void registerUser(String login, String password) {
@@ -30,11 +28,12 @@ public class UserService implements UserDetailsService {
                 .login(login)
                 .password(passwordEncoder.encode(password))
                 .name("Anonymous")
+                .roles(new UserRole[]{UserRole.CAPTAIN})
                 .build());
     }
 
     public UserDto selfInfo(String login) {
         User user = userRepository.findByLoginOrThrow(login);
-        return new UserDto(user.getLogin());
+        return new UserDto(user.getLogin(), user.getRoles());
     }
 }
