@@ -32,6 +32,17 @@ public class XlsxParser {
         OPCPackage pkg = OPCPackage.open(requireNonNull(XlsxParser.class.getResourceAsStream(filename)));
         XSSFWorkbook workbook = new XSSFWorkbook(pkg);
 
+        return doParceIntegralVelocityTable(workbook);
+    }
+
+    @SneakyThrows
+    public List<List<RawVelocity>> parseIntegralVelocityTable(InputStream inputStream) {
+        XSSFWorkbook workbook = new XSSFWorkbook(OPCPackage.open(inputStream));
+
+        return doParceIntegralVelocityTable(workbook);
+    }
+
+    private static List<List<RawVelocity>> doParceIntegralVelocityTable(XSSFWorkbook workbook) {
         XSSFSheet lonSheet = workbook.getSheet("lon");
         List<List<RawVelocity>> matrix = new ArrayList<>();
 
@@ -42,7 +53,6 @@ public class XlsxParser {
             matrix.add(velocitiesInRow);
         }
         return matrix;
-
     }
 
     @SneakyThrows
