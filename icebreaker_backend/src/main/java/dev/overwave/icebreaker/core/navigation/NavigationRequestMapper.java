@@ -11,14 +11,16 @@ public class NavigationRequestMapper {
         return new NavigationRequestDto(navigationRequest.getShip().getId(),
                 navigationRequest.getStartPoint().getId(),
                 navigationRequest.getFinishPoint().getId(),
-                navigationRequest.getStartDate());
+                navigationRequest.getStartDate(),
+                navigationRequest.getStatus());
     }
 
     public NavigationRequest toNavigationRequest(NavigationRequestDto dto, Ship ship, NavigationPoint startPoint,
-                                                 NavigationPoint finishPoint) {
+                                                 NavigationPoint finishPoint, RequestStatus status) {
         return new NavigationRequest(ship,
                 startPoint,
                 finishPoint,
-                dto.startDate());
+                dto.startDate(),
+                status);
     }
 }

@@ -14,3 +14,9 @@ databaseChangeLog:
   - include:
       file: table/velocity_interval.sql
       relativeToChangelogFile: true
+  - include:
+      file: table/navigation_request.sql
+      relativeToChangelogFile: true
+  - include:
+      file: table/ship_route.sql
+      relativeToChangelogFile: true

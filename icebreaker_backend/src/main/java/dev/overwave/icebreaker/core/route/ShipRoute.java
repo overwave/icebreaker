@@ -1,13 +1,11 @@
-package dev.overwave.icebreaker.core.navigation;
+package dev.overwave.icebreaker.core.route;
 
 import dev.overwave.icebreaker.core.database.LongId;
-import dev.overwave.icebreaker.core.ship.Ship;
+import dev.overwave.icebreaker.core.navigation.NavigationPoint;
+import dev.overwave.icebreaker.core.navigation.NavigationRequest;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,16 +15,15 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Entity
-@Table(name = "navigation_request")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @Builder
-public class NavigationRequest extends LongId {
+public class ShipRoute extends LongId {
     @ManyToOne
-    @JoinColumn(name = "ship_id")
-    private Ship ship;
+    @JoinColumn(name = "navigation_request_id")
+    private NavigationRequest navigationRequest;
 
     @ManyToOne
     @JoinColumn(name = "start_point_id")
@@ -37,7 +34,5 @@ public class NavigationRequest extends LongId {
     private NavigationPoint finishPoint;
 
     private Instant startDate;
-
-    @Enumerated(EnumType.STRING)
-    private RequestStatus status;
+    private Instant endDate;
 }
