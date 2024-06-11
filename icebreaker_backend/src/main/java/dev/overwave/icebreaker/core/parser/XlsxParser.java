@@ -20,9 +20,13 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.stream.StreamSupport;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Spliterators.spliteratorUnknownSize;
 
 @UtilityClass
 public class XlsxParser {
@@ -32,6 +36,17 @@ public class XlsxParser {
         OPCPackage pkg = OPCPackage.open(requireNonNull(XlsxParser.class.getResourceAsStream(filename)));
         XSSFWorkbook workbook = new XSSFWorkbook(pkg);
 
+        return doParceIntegralVelocityTable(workbook);
+    }
+
+    @SneakyThrows
+    public List<List<RawVelocity>> parseIntegralVelocityTable(InputStream inputStream) {
+        XSSFWorkbook workbook = new XSSFWorkbook(OPCPackage.open(inputStream));
+
+        return doParceIntegralVelocityTable(workbook);
+    }
+
+    private static List<List<RawVelocity>> doParceIntegralVelocityTable(XSSFWorkbook workbook) {
         XSSFSheet lonSheet = workbook.getSheet("lon");
         List<List<RawVelocity>> matrix = new ArrayList<>();
 
@@ -42,7 +57,6 @@ public class XlsxParser {
             matrix.add(velocitiesInRow);
         }
         return matrix;
-
     }
 
     @SneakyThrows
@@ -109,19 +123,24 @@ public class XlsxParser {
 
     private List<ContinuousVelocity> getAllPointVelocities(XSSFWorkbook workbook, int rowNum, int cellNum) {
         List<ContinuousVelocity> velocities = new ArrayList<>();
-        // проходимся по всем листам документа, в которых лежат значения интегральной тяжести льда
-        for (int sheetNum = 2; sheetNum < workbook.getNumberOfSheets(); sheetNum++) {
-            XSSFSheet velocitySheet = workbook.getSheetAt(sheetNum);
-            String sheetDate = velocitySheet.getSheetName();
+        // проходимся по всем листам документа, в которых лежат значения интегральной тяжести льда и сортируем по датам
+        List<XSSFSheet> sheetsSorted =
+                StreamSupport.stream(spliteratorUnknownSize(workbook.iterator(), Spliterator.ORDERED), false)
+                .skip(2)
+                .sorted(Comparator.comparing(sheet -> DateParser.stringDateToInstant(sheet.getSheetName())))
+                .map(s -> (XSSFSheet) s)
+                .toList();
+        for (int i = 0; i < sheetsSorted.size(); i++) {
             // рассчитываем длительность между двумя датами (листами)
-            Instant instant = DateParser.stringDateToInstant(sheetDate);
+            XSSFSheet currentSheet = sheetsSorted.get(i);
             Duration duration = Duration.ofDays(7);
-            if (sheetNum + 1 < workbook.getNumberOfSheets()) {
-                XSSFSheet nextSheet = workbook.getSheetAt(sheetNum + 1);
-                Instant nextInstant = DateParser.stringDateToInstant(nextSheet.getSheetName());
+            Instant instant = DateParser.stringDateToInstant(currentSheet.getSheetName());
+            if (i + 1 < sheetsSorted.size()) {
+                Instant nextInstant = DateParser.stringDateToInstant(sheetsSorted.get(i + 1).getSheetName());
                 duration = Duration.between(instant, nextInstant);
             }
-            float integralVelocity = (float) velocitySheet.getRow(rowNum).getCell(cellNum).getNumericCellValue();
+            // складываем ContinuousVelocity в правильном порядке
+            float integralVelocity = (float) currentSheet.getRow(rowNum).getCell(cellNum).getNumericCellValue();
             velocities.add(new ContinuousVelocity(integralVelocity, new Interval(instant, duration)));
         }
         return velocities;

@@ -1,5 +1,6 @@
 package dev.overwave.icebreaker.core.route;
 
+import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Edge;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Node;
@@ -13,6 +14,7 @@ import lombok.experimental.UtilityClass;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -45,8 +47,9 @@ public class Router {
                 return Optional.of(buildRoute(startDate, routeSegments, current));
             }
             for (Edge nextEdge : current.edges()) {
-                float velocity = nextEdge.velocities().getFirst().velocity();
-                Entry<MovementType, Float> characteristics = getIceCharacteristics(ship, velocity);
+                Instant currentTime = startDate.plus(routeSegments.get(current).durationMinutes(), ChronoUnit.MINUTES);
+                float currentVelocity = getCurrentVelocity(currentTime, nextEdge.velocities());
+                Entry<MovementType, Float> characteristics = getIceCharacteristics(ship, currentVelocity);
                 if (characteristics.getKey() == MovementType.FORBIDDEN) {
                     continue;
                 }
@@ -64,6 +67,20 @@ public class Router {
             }
         }
         return Optional.empty();
+    }
+
+    private static float getCurrentVelocity(Instant currentTime, List<ContinuousVelocity> velocities) {
+        for (ContinuousVelocity continuousVelocity : velocities) {
+            if (continuousVelocity.interval().contains(currentTime)) {
+                return continuousVelocity.velocity();
+            }
+        }
+        ContinuousVelocity first = velocities.getFirst();
+        if (first.interval().instant().isAfter(currentTime)) {
+            return first.velocity();
+        } else {
+            return velocities.getLast().velocity();
+        }
     }
 
     private Route buildRoute(Instant startDate, Map<Node, RouteSegment> routeSegments, Node node) {

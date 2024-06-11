@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
-import java.util.List;
 
 @RestController
 @RequestMapping(path = "/icebreaker/api/ship", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -20,8 +19,8 @@ public class ShipController {
     private final ShipService shipService;
 
     @GetMapping("/ships")
-    public List<ShipDto> getShips(Principal principal) {
-        return shipService.getShips(principal.getName());
+    public ShipListDto getShips(Principal principal) {
+        return new ShipListDto(shipService.getShips(principal.getName()));
     }
 
     @SneakyThrows
@@ -29,4 +28,10 @@ public class ShipController {
     public ShipDto createShip(@RequestBody ShipCreateRequest ship, Principal principal) {
         return shipService.createShip(ship, principal.getName());
     }
+
+    @GetMapping("/ice-classes")
+    public IceClassListDto getIceClasses() {
+        return new IceClassListDto(shipService.getIceClasses());
+    }
+
 }

@@ -3,8 +3,12 @@ package dev.overwave.icebreaker.core.navigation;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import dev.overwave.icebreaker.core.ship.Ship;
 import dev.overwave.icebreaker.core.ship.ShipRepository;
+import dev.overwave.icebreaker.core.user.User;
+import dev.overwave.icebreaker.core.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -13,13 +17,22 @@ public class NavigationRequestService {
     private final NavigationRequestMapper navigationRequestMapper;
     private final ShipRepository shipRepository;
     private final NavigationPointRepository navigationPointRepository;
+    private final UserRepository userRepository;
 
     public void saveNavigationRequest(NavigationRequestDto requestDto) {
         Ship ship = shipRepository.findByIdOrThrow(requestDto.shipId());
         NavigationPoint startPoint = navigationPointRepository.findByIdOrThrow(requestDto.startPointId());
         NavigationPoint finishPoint = navigationPointRepository.findByIdOrThrow(requestDto.finishPointId());
         NavigationRequest navigationRequest = navigationRequestMapper.toNavigationRequest(requestDto, ship,
-                startPoint, finishPoint);
+                startPoint, finishPoint, RequestStatus.PENDING);
         navigationRequestRepository.save(navigationRequest);
+    }
+
+    public List<NavigationRequestDto> getNavigationRequests(String login) {
+        User user = userRepository.findByLoginOrThrow(login);
+        return user.getShips().stream()
+                .flatMap(ship -> ship.getNavigationRequests().stream())
+                .map(navigationRequestMapper::toNavigationRequestDto)
+                .toList();
     }
 }

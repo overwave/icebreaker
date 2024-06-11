@@ -57,7 +57,12 @@ class XlsxParserTest {
     void testParseRosatomIntegrVelocityTable() {
         List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
 
-        assertThat(matrix.getFirst().getFirst().velocities()).hasSize(14);
+        RawVelocity first = matrix.getFirst().getFirst();
+        assertThat(first.velocities()).hasSize(14);
+        Interval interval1 = first.velocities().getFirst().interval();
+        Interval interval2 = first.velocities().get(1).interval();
+        assertThat(interval1.instant().isBefore(interval2.instant())).isTrue();
+        assertThat(interval1.instant().plus(interval1.duration())).isEqualTo(interval2.instant());
     }
 
     @Test

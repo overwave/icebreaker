@@ -1,5 +1,6 @@
 package dev.overwave.icebreaker.api.navigation;
 
+import dev.overwave.icebreaker.core.geospatial.VelocityIntervalService;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.attribute.UserPrincipal;
 import java.util.List;
 
 @RestController
@@ -21,6 +23,7 @@ import java.util.List;
 public class NavigationRequestController {
     private final NavigationPointService navigationPointService;
     private final NavigationRequestService navigationRequestService;
+    private final VelocityIntervalService velocityIntervalService;
 
     @GetMapping("/navigation-points")
     public List<NavigationPointDto> getNavigationPoints() {
@@ -33,8 +36,25 @@ public class NavigationRequestController {
         navigationPointService.resetNavigationPoints(file.getInputStream());
     }
 
-    @PutMapping("/request")
+    @PutMapping("/route-requests")
     public void addNavigationRequest(@RequestBody NavigationRequestDto requestDto) {
         navigationRequestService.saveNavigationRequest(requestDto);
     }
+
+    @GetMapping("/route-requests")
+    public NavigationRequestListDto getNavigationRequests(UserPrincipal userPrincipal) {
+        return new NavigationRequestListDto(navigationRequestService.getNavigationRequests(userPrincipal.getName()));
+    }
+
+    @GetMapping("/velocity-intervals")
+    public VelocityIntervalListDto getVelocityIntervals() {
+        return new VelocityIntervalListDto(velocityIntervalService.getVelocityIntervals());
+    }
+
+    @SneakyThrows
+    @PutMapping("/integral-velocities")
+    public void resetIntegralVelocities(@RequestParam MultipartFile file) {
+        velocityIntervalService.resetIntegralVelocities(file.getInputStream());
+    }
+
 }
