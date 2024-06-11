@@ -8,7 +8,6 @@ public class VelocityIntervalMapper {
 
     public VelocityIntervalDto toVelocityIntervalDto(VelocityInterval interval) {
         return new VelocityIntervalDto(
-                interval.getId(),
                 interval.getStartDate(),
                 interval.getEndDate());
     }

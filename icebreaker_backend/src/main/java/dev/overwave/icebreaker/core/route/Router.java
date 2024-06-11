@@ -75,14 +75,11 @@ public class Router {
                 return continuousVelocity.velocity();
             }
         }
-        List<ContinuousVelocity> sorted = velocities.stream()
-                .sorted(Comparator.comparing(continuousVelocity -> continuousVelocity.interval().instant()))
-                .toList();
-        ContinuousVelocity first = sorted.getFirst();
+        ContinuousVelocity first = velocities.getFirst();
         if (first.interval().instant().isAfter(currentTime)) {
             return first.velocity();
         } else {
-            return sorted.getLast().velocity();
+            return velocities.getLast().velocity();
         }
     }
 

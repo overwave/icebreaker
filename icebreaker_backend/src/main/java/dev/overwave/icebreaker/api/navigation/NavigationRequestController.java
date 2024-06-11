@@ -49,8 +49,8 @@ public class NavigationRequestController {
     }
 
     @GetMapping("/velocity-intervals")
-    public List<VelocityIntervalDto> getVelocityIntervals() {
-        return velocityIntervalService.getVelocityIntervals();
+    public VelocityIntervals getVelocityIntervals() {
+        return new VelocityIntervals(velocityIntervalService.getVelocityIntervals());
     }
 
     @SneakyThrows

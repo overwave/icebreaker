@@ -37,6 +37,6 @@ public class VelocityIntervalService {
                             .build());
         }
         velocityIntervalRepository.deleteAll();
-        List<VelocityInterval> points = velocityIntervalRepository.saveAllAndFlush(unsavedVelocityIntervals);
+        List<VelocityInterval> intervals = velocityIntervalRepository.saveAllAndFlush(unsavedVelocityIntervals);
     }
 }
