@@ -38,6 +38,6 @@ public class VelocityIntervalService {
         velocityIntervalRepository.saveAllAndFlush(unsavedVelocityIntervals);
         // пишем в файл новые данные о ледовой проходимости в виде сетки
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(unsavedRawVelocities);
-        SerializationUtils.writeSpatial(spatialVelocities, "data/spatial_velocities.dat");
+        SerializationUtils.writeSpatial(spatialVelocities, "data/spatial_velocities.l4z");
     }
 }

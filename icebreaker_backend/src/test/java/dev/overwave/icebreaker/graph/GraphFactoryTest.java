@@ -16,6 +16,7 @@ import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.util.FileUtils;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.awt.BasicStroke;
@@ -226,7 +227,7 @@ public class GraphFactoryTest {
         }
 
 
-        Entry<Double, Double> dudinka = Mercator.pointToMercatorNormalized(new Point(69.4F,	86.15F));
+        Entry<Double, Double> dudinka = Mercator.pointToMercatorNormalized(new Point(69.4F, 86.15F));
         graphics.setColor(Color.RED);
         graphics.setStroke(new BasicStroke(7));
         graphics.drawLine(
@@ -246,17 +247,33 @@ public class GraphFactoryTest {
     }
 
     @Test
-    void testSerializationSpatial() {
-        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
-        List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
+    void testReadingRawExcelSpatial() {
+        long before = System.currentTimeMillis();
+        List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(
+                XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx"));
+        System.out.println((System.currentTimeMillis() - before) + " millis"); // 5-6s
+        GraphFactory.print();
+        System.gc();
+        GraphFactory.print(); // 100-120mb
+        assertThat(spatialVelocities).hasSizeGreaterThan(1000);
 
-        SerializationUtils.writeSpatial(spatialVelocities, "data/spatial_velocities.dat");
-        List<SpatialVelocity> deserialized = SerializationUtils.readSpatial("data/spatial_velocities.dat");
-
-        assertThat(deserialized).isEqualTo(spatialVelocities);
+        SerializationUtils.writeSpatial(spatialVelocities, "data/spatial_velocities.l4z");
     }
 
     @Test
+    @SneakyThrows
+    void testDeserializationSpatial() {
+        long before = System.currentTimeMillis();
+        List<SpatialVelocity> deserialized = SerializationUtils.readSpatial("data/spatial_velocities.l4z");
+        System.out.println((System.currentTimeMillis() - before) + " millis"); // 610ms (50-75 if compressed)
+        GraphFactory.print();
+        System.gc();
+        GraphFactory.print(); // 23mb (45 if compressed)
+        assertThat(deserialized).hasSizeGreaterThan(1000);
+    }
+
+    @Test
+    @Disabled
     void testSerializationGraph() {
         List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);

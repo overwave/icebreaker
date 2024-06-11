@@ -41,6 +41,7 @@ dependencies {
     // read xlsx
     implementation("org.apache.poi:poi-ooxml:5.2.5")
     implementation("org.apache.commons:commons-compress:1.26.2")
+    implementation("org.lz4:lz4-java:1.8.0")
 
     implementation("org.apache.commons:commons-lang3:3.14.0")
 
