@@ -246,7 +246,7 @@ public class GraphFactoryTest {
     }
 
     @Test
-    void testSerialization() {
+    void testSerializationSpatial() {
         List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
 
@@ -254,5 +254,17 @@ public class GraphFactoryTest {
         List<SpatialVelocity> deserialized = SerializationUtils.readSpatial("data/spatial_velocities.dat");
 
         assertThat(deserialized).isEqualTo(spatialVelocities);
+    }
+
+    @Test
+    void testSerializationGraph() {
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
+        List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
+        Graph graph = GraphFactory.buildWeightedGraph(spatialVelocities);
+
+        SerializationUtils.writeWeightedGraph(graph, "data/graph.dat");
+        Graph deserialized = SerializationUtils.readWeightedGraph("data/graph.dat");
+
+        assertThat(deserialized).isEqualTo(graph);
     }
 }
