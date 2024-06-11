@@ -5,12 +5,11 @@ import useFormAndValidation from "../../hooks/useFormAndValidation";
 function Login({ onSubmit, isError, errorMessage }) {
   const { values, errors, isValid, resetForm, handleChange } =
     useFormAndValidation();
-  const emailRegex = new RegExp(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/);
 
   useEffect(() => {
     resetForm(
       {
-        email: "",
+        login: "",
         password: "",
       },
       {},
@@ -39,16 +38,16 @@ function Login({ onSubmit, isError, errorMessage }) {
       <div className="auth__field">
         <span className="auth__input-text">E-mail</span>
         <input
-          name="email"
+          name="login"
           className="auth__input"
           type="text"
           onChange={handleChange}
-          value={values.email}
-          //pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-          pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+          value={values.login}
+          //pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+          pattern="^[А-ЯЁа-яёA-Za-z\s\-]+$"
           required
         />
-        <span className="auth__input-error">{errors.email || ""}</span>
+        <span className="auth__input-error">{errors.login || ""}</span>
       </div>
 
       <div className="auth__field">
