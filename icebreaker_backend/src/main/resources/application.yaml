@@ -30,3 +30,8 @@ spring:
       cache:
         cachecontrol:
           max-age: 1d
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 75MB
+      max-request-size: 75MB

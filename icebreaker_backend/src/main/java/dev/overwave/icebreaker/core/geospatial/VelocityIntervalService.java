@@ -34,10 +34,12 @@ public class VelocityIntervalService {
                         .endDate(interval.instant().plus(interval.duration()))
                         .build())
                 .toList();
-        velocityIntervalRepository.deleteAll();
-        velocityIntervalRepository.saveAllAndFlush(unsavedVelocityIntervals);
+        if (!velocityIntervalRepository.findAll().isEmpty()) {
+            throw new IllegalStateException();
+        }
         // пишем в файл новые данные о ледовой проходимости в виде сетки
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(unsavedRawVelocities);
         SerializationUtils.writeSpatial(spatialVelocities, "data/spatial_velocities.l4z");
+        velocityIntervalRepository.saveAllAndFlush(unsavedVelocityIntervals);
     }
 }

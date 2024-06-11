@@ -15,6 +15,7 @@ import net.jpountz.lz4.LZ4FrameOutputStream;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class SerializationUtils {
 
     @SneakyThrows
     public void writeSpatial(List<SpatialVelocity> spatialVelocities, String path) {
+        new File(path).getParentFile().mkdirs();
         try (DataOutputStream outputStream = new DataOutputStream(
                 new LZ4FrameOutputStream(new FileOutputStream(path)))
         ) {
