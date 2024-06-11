@@ -10,6 +10,8 @@ import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.SparseList;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
+import net.jpountz.lz4.LZ4FrameInputStream;
+import net.jpountz.lz4.LZ4FrameOutputStream;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -30,7 +32,9 @@ public class SerializationUtils {
 
     @SneakyThrows
     public void writeSpatial(List<SpatialVelocity> spatialVelocities, String path) {
-        try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(path))) {
+        try (DataOutputStream outputStream = new DataOutputStream(
+                new LZ4FrameOutputStream(new FileOutputStream(path)))
+        ) {
             outputStream.writeInt(spatialVelocities.size());
             Map<Interval, Integer> intervals = serializeIntervals(outputStream,
                     spatialVelocities.getFirst().velocities());
@@ -74,7 +78,7 @@ public class SerializationUtils {
 
     @SneakyThrows
     public List<SpatialVelocity> readSpatial(String path) {
-        try (DataInputStream inputStream = new DataInputStream(new FileInputStream(path))) {
+        try (DataInputStream inputStream = new DataInputStream(new LZ4FrameInputStream(new FileInputStream(path)))) {
             int spatialVelocitiesSize = inputStream.readInt();
             List<Interval> intervals = deserializeIntervals(inputStream);
             List<SpatialVelocity> spatialVelocities = new ArrayList<>(spatialVelocitiesSize);
