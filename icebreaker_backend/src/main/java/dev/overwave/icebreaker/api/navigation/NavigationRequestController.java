@@ -3,7 +3,6 @@ package dev.overwave.icebreaker.api.navigation;
 import dev.overwave.icebreaker.core.geospatial.VelocityIntervalService;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestService;
-import dev.overwave.icebreaker.core.navigation.RequestStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.MediaType;
@@ -17,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.attribute.UserPrincipal;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping(path = "/icebreaker/api/navigation", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -44,13 +42,13 @@ public class NavigationRequestController {
     }
 
     @GetMapping("/route-requests")
-    public Map<RequestStatus, List<NavigationRequestDto>> getNavigationRequests(UserPrincipal userPrincipal) {
-        return navigationRequestService.getNavigationRequests(userPrincipal.getName());
+    public NavigationRequestListDto getNavigationRequests(UserPrincipal userPrincipal) {
+        return new NavigationRequestListDto(navigationRequestService.getNavigationRequests(userPrincipal.getName()));
     }
 
     @GetMapping("/velocity-intervals")
-    public VelocityIntervals getVelocityIntervals() {
-        return new VelocityIntervals(velocityIntervalService.getVelocityIntervals());
+    public VelocityIntervalListDto getVelocityIntervals() {
+        return new VelocityIntervalListDto(velocityIntervalService.getVelocityIntervals());
     }
 
     @SneakyThrows

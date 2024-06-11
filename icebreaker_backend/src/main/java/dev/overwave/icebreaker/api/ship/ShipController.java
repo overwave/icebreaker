@@ -1,6 +1,5 @@
 package dev.overwave.icebreaker.api.ship;
 
-import dev.overwave.icebreaker.core.ship.IceClass;
 import dev.overwave.icebreaker.core.ship.ShipService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -12,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.List;
 
 @RestController
 @RequestMapping(path = "/icebreaker/api/ship", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -22,8 +19,8 @@ public class ShipController {
     private final ShipService shipService;
 
     @GetMapping("/ships")
-    public List<ShipDto> getShips(Principal principal) {
-        return shipService.getShips(principal.getName());
+    public ShipListDto getShips(Principal principal) {
+        return new ShipListDto(shipService.getShips(principal.getName()));
     }
 
     @SneakyThrows
@@ -33,12 +30,8 @@ public class ShipController {
     }
 
     @GetMapping("/ice-classes")
-    public List<IceClassDto> getIceClasses() {
-
-        return Arrays.stream(IceClass.values())
-                .filter(iceClass -> !iceClass.getGroup().isIcebreaker())
-                .map(iceClass -> new IceClassDto(iceClass, iceClass.getDescription()))
-                .toList();
+    public IceClassListDto getIceClasses() {
+        return new IceClassListDto(shipService.getIceClasses());
     }
 
 }

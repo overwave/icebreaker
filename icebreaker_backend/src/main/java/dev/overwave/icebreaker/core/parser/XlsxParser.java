@@ -22,8 +22,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.stream.StreamSupport;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Spliterators.spliteratorUnknownSize;
 
 @UtilityClass
 public class XlsxParser {
@@ -120,16 +123,13 @@ public class XlsxParser {
 
     private List<ContinuousVelocity> getAllPointVelocities(XSSFWorkbook workbook, int rowNum, int cellNum) {
         List<ContinuousVelocity> velocities = new ArrayList<>();
-        List<XSSFSheet> sheets = new ArrayList<>();
-        // проходимся по всем листам документа, в которых лежат значения интегральной тяжести льда и кладем листы в список
-        for (int sheetNum = 2; sheetNum < workbook.getNumberOfSheets(); sheetNum++) {
-            XSSFSheet velocitySheet = workbook.getSheetAt(sheetNum);
-            sheets.add(velocitySheet);
-        }
-        // сортируем по датам
-        List<XSSFSheet> sheetsSorted = sheets.stream()
-                        .sorted(Comparator.comparing(sheet -> DateParser.stringDateToInstant(sheet.getSheetName())))
-                        .toList();
+        // проходимся по всем листам документа, в которых лежат значения интегральной тяжести льда и сортируем по датам
+        List<XSSFSheet> sheetsSorted =
+                StreamSupport.stream(spliteratorUnknownSize(workbook.iterator(), Spliterator.ORDERED), false)
+                .skip(2)
+                .sorted(Comparator.comparing(sheet -> DateParser.stringDateToInstant(sheet.getSheetName())))
+                .map(s -> (XSSFSheet) s)
+                .toList();
         for (int i = 0; i < sheetsSorted.size(); i++) {
             // рассчитываем длительность между двумя датами (листами)
             XSSFSheet currentSheet = sheetsSorted.get(i);

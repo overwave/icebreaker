@@ -1,5 +1,6 @@
 package dev.overwave.icebreaker.core.ship;
 
+import dev.overwave.icebreaker.api.ship.IceClassDto;
 import dev.overwave.icebreaker.api.ship.ShipCreateRequest;
 import dev.overwave.icebreaker.api.ship.ShipDto;
 import dev.overwave.icebreaker.core.user.User;
@@ -8,6 +9,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -25,6 +27,14 @@ public class ShipService {
 
     public ShipDto createShip(ShipCreateRequest ship, String username) {
         User user = userRepository.findByLoginOrThrow(username);
-        return shipMapper.map(shipRepository.save(new Ship(ship.name(), ship.iceClass(), ship.speed(), false, user)));
+        return shipMapper.map(shipRepository.save(new Ship(ship.name(), ship.iceClass(), ship.speed(), false, user,
+                null)));
+    }
+
+    public List<IceClassDto> getIceClasses() {
+        return Arrays.stream(IceClass.values())
+                .filter(iceClass -> !iceClass.getGroup().isIcebreaker())
+                .map(iceClass -> new IceClassDto(iceClass, iceClass.getDescription()))
+                .toList();
     }
 }
