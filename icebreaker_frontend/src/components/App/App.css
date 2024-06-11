@@ -1,6 +1,15 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Golos", Arial, Helvetica, sans-serif;
+}
+
 .page {
   min-height: 100vh;
   height: max-content;
+  position: relative;
 }
 
 .content {

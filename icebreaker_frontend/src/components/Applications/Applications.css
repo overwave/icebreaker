@@ -1,0 +1,88 @@
+.applications {
+    height: calc(100% - 144px);
+    background-color: #fff;
+    width: 436px;
+    position: absolute;
+    top: 32px;
+    left: 40px;
+    display: grid;
+    grid-template-rows: max-content 1fr;
+}
+
+.applications_closed {
+    height: 60px;
+}
+
+.applications__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 19px 24px 13px 20px;
+    cursor: pointer;
+}
+
+.applications__title {
+    font-family: 'Golos';
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 20px;
+    color: #000000;
+    margin: 0;
+}
+
+.applications__arrow_closed {
+    transform: rotate(180deg);
+}
+
+.applications__content {
+    display: grid;
+    grid-template-rows: 1fr max-content;
+}
+
+.applications__body {
+    padding: 0 21px 21px;
+}
+
+.applications__nav-list {
+    list-style: none;
+    margin: 0 0 17px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.applications__nav-item {
+    padding: 10px;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 1.25;
+    color: #000000;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.applications__nav-item_active {
+    border-bottom: 1px solid #000;
+}
+
+.applications__footer {
+    padding: 15px 20px;
+    border-top: 1px solid #000;
+}
+
+.applications__btn {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 1.25;
+    color: #000000;
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+    cursor: pointer;
+}
+
+.applications__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}

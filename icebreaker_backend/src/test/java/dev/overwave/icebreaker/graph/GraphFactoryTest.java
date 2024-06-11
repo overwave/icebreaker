@@ -12,6 +12,7 @@ import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.graph.SparseList;
 import dev.overwave.icebreaker.core.map.Mercator;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
+import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.util.FileUtils;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GraphFactoryTest {
 
@@ -71,7 +74,6 @@ public class GraphFactoryTest {
                 }
             }
 
-//            graphics2D.setStroke(new BasicStroke(3));
             graphics2D.setColor(Color.BLUE);
             Entry<Double, Double> pointLeft = Mercator.pointToMercatorNormalized(new Point(64.95F, 40.0F));
             graphics2D.drawLine(
@@ -241,5 +243,16 @@ public class GraphFactoryTest {
     void testMercatorProjection() {
         Map.Entry<Double, Double> point = Mercator.pointToMercatorNormalized(new Point(51.506873F, -0.181732F));
         System.out.println(point);
+    }
+
+    @Test
+    void testSerialization() {
+        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
+        List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
+
+        SerializationUtils.writeSpatial(spatialVelocities, "data/spatial_velocities.dat");
+        List<SpatialVelocity> deserialized = SerializationUtils.readSpatial("data/spatial_velocities.dat");
+
+        assertThat(deserialized).isEqualTo(spatialVelocities);
     }
 }
