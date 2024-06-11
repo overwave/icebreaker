@@ -13,6 +13,9 @@ import {
   errorsLogin,
   errorsUpdate,
 } from "../../configs/errors";
+import Main from "../Main/Main";
+import Header from "../Header/Header";
+import ProtectedRoute from "../ProtectedRoute/ProtectedRoute";
 
 function App() {
 
@@ -24,26 +27,33 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Пользователь
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(localStorage.getItem("loggedIn") ? localStorage.getItem("loggedIn"):false);
   const [currentUser, setCurrentUser] = useState({
-    name: "",
-    email: "",
-    _id: "",
+    role: "",
+    login: ""
   });
+
+  // Navigation points
+  const [navPoints, setNavPoints] = useState([]);
 
   const history = useHistory();
   const { pathname } = useLocation();
 
   useEffect(() => {
     if (loggedIn && (pathname === "/signin" || pathname === "/signup")) {
-      history.push("/movies");
+      history.push("/");
     }
     setIsError(false);
   }, [loggedIn, history, pathname]);
 
   useEffect(() => {
-    checkToken();
-  }, []);
+    const isLoggedIn = localStorage.getItem("loggedIn");
+    if (isLoggedIn) {
+      getUserInfo();
+    }
+    
+    //handleLogout();
+  }, [loggedIn]);
 
   function createError(errorsList, err) {
     if (errorsList[err] !== undefined) {
@@ -54,15 +64,18 @@ function App() {
     setIsError(true);
   }
 
-  function handleLogin({ email, password }) {
+  function handleLogin({ login, password }) {
     setIsLoading(true);
     mainApi
-      .authorize({ email, password })
+      .authorize({ login, password })
       .then((res) => {
-        localStorage.setItem("jwt", res.token);
-        setLoggedIn(true);
+        if (res.result === "SUCCESS") {
+          localStorage.setItem("loggedIn", true);
+          setLoggedIn(true);
+        }
       })
       .catch((err) => {
+        console.log(`Ошибка: ${err}`);
         createError(errorsLogin, err.status);
       })
       .finally(() => {
@@ -70,14 +83,17 @@ function App() {
       });
   }
 
-  function handleRegister({ name, email, password }) {
+  function handleRegister({ role, login, password }) {
     setIsLoading(true);
     mainApi
-      .register({ name, email, password })
-      .then(() => {
-        handleLogin({ email: email, password: password });
+      .register({ role, login, password })
+      .then((res) => {
+        if (res === "SUCCESS") {
+          handleLogin({ login, password });
+        }
       })
       .catch((err) => {
+        console.log(`Ошибка: ${err}`);
         createError(errorsRegister, err.status);
       })
       .finally(() => {
@@ -86,32 +102,93 @@ function App() {
   }
 
   function handleLogout() {
-    localStorage.clear();
+    setIsLoading(true);
+    mainApi
+      .logout()
+      .then((res) => {
+        console.log(res);
+        localStorage.clear();
+        setCurrentUser({
+          role: "",
+          login: ""
+        });
+        setLoggedIn(false);
+      })
+      .catch((err) => {
+        console.log(`Ошибка: ${err}`);
+        createError(errorsRegister, err.status);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }
 
-  function checkToken() {
-    const jwt = localStorage.getItem("jwt");
-    if (jwt) {
-      mainApi
-        .getContent(jwt)
-        .then((res) => {
-          setCurrentUser(res);
-          setLoggedIn(true);
-          history.push(pathname);
-        })
-        .catch((err) => {
-          handleLogout();
-          console.log(`Ошибка: ${err}`);
-        });
-    }
+  function getUserInfo() {
+    setIsLoading(true);
+    mainApi
+      .getUserInfo()
+      .then((res) => {
+        setLoggedIn(true);
+        setCurrentUser(res);
+      })
+      .catch((err) => {
+        //handleLogout();
+        console.log(err);
+        console.log(`Ошибка: ${err}`);
+        createError(errorsLogin, err.status);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }
+
+  // Опорные точки
+  function getNavigationPoints() {
+    setIsLoading(true);
+    mainApi
+      .getNavigationPoints()
+      .then((res) => {
+        setNavPoints(res);
+      })
+      .catch((err) => {
+        console.log(`Ошибка: ${err}`);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }
+
+  // Список кораблей
+  function getShips() {
+    setIsLoading(true);
+    mainApi
+      .getShips()
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(`Ошибка: ${err}`);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }
+
+  function closeAllPopups() {
+    
   }
 
   return (
     <>
       <CurrentUserContext.Provider value={{ currentUser }}>
         <div className="page">
+          <Header loggedIn={loggedIn} handleLogout={handleLogout} />
           <main className="content">
             <Switch>
+              <ProtectedRoute exact path="/" loggedIn={loggedIn}>
+                <Main getNavigationPoints={getNavigationPoints} navPoints={navPoints} getShips={getShips} />
+              </ProtectedRoute>
+
               <Route path="/signin">
                 <Login
                   onSubmit={handleLogin}

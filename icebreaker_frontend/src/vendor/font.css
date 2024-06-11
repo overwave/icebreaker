@@ -1,19 +1,19 @@
 @font-face {
-  font-family: "Inter";
+  font-family: "Golos";
   font-style: normal;
   font-weight: 400;
-  src: url(../fonts/Inter-Regular.woff2) format("woff2"),
-    url(../fonts/Inter-Regular.woff) format("woff"),
-    url(../fonts/Inter-Regular.ttf) format("truetype"),
-    url(../fonts/Inter-Regular.otf) format("opentype");
+  src: url(../fonts/Golos\ Text_Regular.woff2) format("woff2"),
+    url(../fonts/Golos\ Text_Regular.woff) format("woff"),
+    url(../fonts/Golos\ Text-Regular.ttf) format("truetype"),
+    url(../fonts/Golos\ Text_Regular.eot) format("opentype");
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: "Golos";
   font-style: normal;
   font-weight: 500;
-  src: url(../fonts/Inter-Medium.woff2) format("woff2"),
-    url(../fonts/Inter-Medium.woff) format("woff"),
-    url(../fonts/Inter-Medium.ttf) format("truetype"),
-    url(../fonts/Inter-Medium.otf) format("opentype");
+  src: url(../fonts/Golos\ Text_Medium.woff2) format("woff2"),
+    url(../fonts/Golos\ Text_Medium.woff) format("woff"),
+    url(../fonts/Golos\ Text-Medium.ttf) format("truetype"),
+    url(../fonts/Golos\ Text_Medium.eot) format("opentype");
 }

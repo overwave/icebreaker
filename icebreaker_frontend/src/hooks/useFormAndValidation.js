@@ -1,13 +1,13 @@
 import { useState, useCallback } from "react";
 
 function useFormAndValidation() {
-  const [values, setValues] = useState({ name: "", email: "", password: "" });
+  const [values, setValues] = useState({ role: "", login: "", password: "" });
   const [errors, setErrors] = useState({});
   const [isValid, setIsValid] = useState(false);
 
   const resetForm = useCallback(
     (
-      newValues = { name: "", email: "", password: "" },
+      newValues = { role: "", login: "", password: "" },
       newErrors = {},
       newIsValid = false
     ) => {
