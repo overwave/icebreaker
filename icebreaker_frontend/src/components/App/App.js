@@ -40,8 +40,8 @@ function App() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    if (loggedIn && (pathname === "/signin" || pathname === "/signup")) {
-      history.push("/");
+    if (loggedIn && (pathname === "/icebreaker/signin" || pathname === "/icebreaker/signup")) {
+      history.push("/icebreaker/");
     }
     setIsError(false);
   }, [loggedIn, history, pathname]);
@@ -185,11 +185,11 @@ function App() {
           <Header loggedIn={loggedIn} handleLogout={handleLogout} />
           <main className="content">
             <Switch>
-              <ProtectedRoute exact path="/" loggedIn={loggedIn}>
+              <ProtectedRoute exact path="/icebreaker/" loggedIn={loggedIn}>
                 <Main getNavigationPoints={getNavigationPoints} navPoints={navPoints} getShips={getShips} />
               </ProtectedRoute>
 
-              <Route path="/signin">
+              <Route path="/icebreaker/signin">
                 <Login
                   onSubmit={handleLogin}
                   isError={isError}
@@ -197,7 +197,7 @@ function App() {
                 />
               </Route>
 
-              <Route path="/signup">
+              <Route path="/icebreaker/signup">
                 <Register
                   onSubmit={handleRegister}
                   isError={isError}

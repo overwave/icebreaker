@@ -27,7 +27,7 @@ function Register({ onSubmit, isError, errorMessage }) {
       onSubmit={handleSubmit}
       title="Добро пожаловать!"
       buttonText="Зарегистрироваться"
-      link="/signin"
+      link="/icebreaker/signin"
       linkText="Войти"
       textWithLink="Уже зарегистрированы?"
       data={values}
