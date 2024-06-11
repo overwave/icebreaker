@@ -9,12 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class StaticController {
 
     @RequestMapping("/icebreaker/**")
-    public String asd(HttpServletRequest request) {
-        String path = StringUtils.substringAfter(request.getServletPath(), "/icebreaker");
-
-        if (path.contains(".")) {
-            return path;
+    public String serveStaticIndex(HttpServletRequest request) {
+        if (request.getServletPath().contains(".")) {
+            return StringUtils.substringAfter(request.getServletPath(), "/icebreaker");
         }
-        return path.isEmpty() ? "index.html" : path + ".html";
+        return "/index.html";
     }
 }

@@ -12,10 +12,10 @@ function PageNotFound({ history }) {
       <nav className="error__nav">
         <button
           type="button"
-          onClick={() => history.push("/")}
+          onClick={() => history.push("/icebreaker/")}
           className="error__link"
         >
-          Назад
+          На главную
         </button>
       </nav>
     </section>

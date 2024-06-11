@@ -1,5 +1,3 @@
-
-
 import "./Maps.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { YMaps, Map, Polyline, Placemark, ObjectManager, Clusterer } from "@pbe/react-yandex-maps";
@@ -38,7 +36,12 @@ export default function Maps({ navPoints, shipGeo }) {
 
     return (
         <>
-            <YMaps query={{load: 'Map,Layer,geoObject.addon.balloon', lang: "ru_RU", ns: "use-load-option"}}>
+            <YMaps query={{
+                load: 'Map,Layer,geoObject.addon.balloon',
+                lang: "ru_RU",
+                ns: "use-load-option",
+                apikey: "c5678c43-0304-4bfb-8d59-84de14c585fe"
+            }}>
                 <div>
                     <Map defaultState={{center: [73.290841, 55.573121], zoom: 5}}
                          options={{yandexMapDisablePoiInteractivity: true, minZoom: 3, maxZoom: 8}}

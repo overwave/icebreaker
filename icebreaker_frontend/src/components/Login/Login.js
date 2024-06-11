@@ -27,7 +27,7 @@ function Login({ onSubmit, isError, errorMessage }) {
       title="Рады видеть!"
       buttonText="Войти"
       buttonClass="auth__btn_name_login"
-      link="/signup"
+      link="/icebreaker/signup"
       linkText="Регистрация"
       textWithLink="Ещё не зарегистрированы?"
       data={values}
