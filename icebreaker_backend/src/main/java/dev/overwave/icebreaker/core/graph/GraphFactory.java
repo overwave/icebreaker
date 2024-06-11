@@ -99,11 +99,13 @@ public class GraphFactory {
         if (first == null || second == null) {
             return;
         }
-        Edge edge = new Edge(
-                Map.entry(first, second),
+        List<ContinuousVelocity> continuousVelocities = getContinuousVelocities(first, second, gridIndexer);
+        if (continuousVelocities == null) {
+            return;
+        }
+        Edge edge = new Edge(Map.entry(first, second),
                 getDistance(first.coordinates(), second.coordinates()),
-                getContinuousVelocities(first, second, gridIndexer)
-        );
+                continuousVelocities);
         first.edges().add(edge);
         second.edges().add(edge);
     }
