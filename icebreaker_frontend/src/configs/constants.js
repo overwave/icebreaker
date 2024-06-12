@@ -7,7 +7,7 @@ const roles = [
     {
       id: 2,
       name: "Администратор",
-      role: "CAPTAIN"
+      role: "ADMIN"
     }
   ];
 
