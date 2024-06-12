@@ -30,11 +30,10 @@ public class Router {
 
     public static final float KNOTS_TO_METER_PER_MINUTES = 1852F / 60F;
 
-    public Optional<Route> createRoute(Point pointFrom, Point pointTo, Instant startDate, Graph graph, Ship ship) {
-        List<Node> closestNodes = findClosestNodes(graph.graph(), pointFrom, pointTo);
-        Node from = closestNodes.getFirst();
-        Node to = closestNodes.getLast();
+//    public Map<Point, Node> findClosestNodes(Graph graph, Point... points) {}
 
+    public Optional<Route> createRoute(Node from, Node to, Instant startDate, Graph graph, Ship ship,
+                                       MovementType movementType, long referenceTime) {
         PriorityQueue<Entry<Node, Integer>> queue = new PriorityQueue<>(Comparator.comparingInt(Entry::getValue));
         queue.add(Map.entry(from, 0));
 
@@ -47,15 +46,21 @@ public class Router {
                 return Optional.of(buildRoute(startDate, routeSegments, current));
             }
             for (Edge nextEdge : current.edges()) {
-                Instant currentTime = startDate.plus(routeSegments.get(current).durationMinutes(), ChronoUnit.MINUTES);
+                int currentTravelDuration = routeSegments.get(current).durationMinutes();
+                // если текущая длительность сформированного пути в 2 раза больше, чем полный путь под проводкой
+                // ледокола - значит такой путь нам уже не подходит
+                if (movementType == MovementType.INDEPENDENT && currentTravelDuration > referenceTime * 2) {
+                    return Optional.empty();
+                }
+                Instant currentTime = startDate.plus(currentTravelDuration, ChronoUnit.MINUTES);
                 float currentVelocity = getCurrentVelocity(currentTime, nextEdge.velocities());
-                Entry<MovementType, Float> characteristics = getIceCharacteristics(ship, currentVelocity);
+                Entry<MovementType, Float> characteristics = getIceCharacteristics(ship, currentVelocity, movementType);
                 if (characteristics.getKey() == MovementType.FORBIDDEN) {
                     continue;
                 }
                 float speedMpm = characteristics.getValue() * KNOTS_TO_METER_PER_MINUTES;
                 int edgeTravelTime = (int) (nextEdge.distance() / speedMpm);
-                int segmentDuration = routeSegments.get(current).durationMinutes() + edgeTravelTime;
+                int segmentDuration = currentTravelDuration + edgeTravelTime;
                 Node nextNode = nextEdge.getOther(current);
                 RouteSegment nextSegment = routeSegments.get(nextNode);
                 if (nextSegment == null || nextSegment.durationMinutes() > segmentDuration) {
@@ -99,16 +104,18 @@ public class Router {
         return new Route(new Interval(startDate, Duration.ofMinutes(timeInMinutes)), route.reversed(), distance);
     }
 
-    private static Entry<MovementType, Float> getIceCharacteristics(Ship ship, float integralVelocity) {
-        return ship.getIceClass().getGroup().getCharacteristics(integralVelocity, ship.getSpeed());
+    private static Entry<MovementType, Float> getIceCharacteristics(Ship ship, float integralVelocity,
+                                                                    MovementType movementType) {
+        return ship.getIceClass().getGroup().getCharacteristics(integralVelocity, ship.getSpeed(), movementType);
     }
 
-    private List<Node> findClosestNodes(List<SparseList<Node>> graphList, Point... points) {
+    public Map<Point, Node> findClosestNodes(Graph graph, Point... points) {
         List<Node> result = Arrays.asList(new Node[points.length]);
         float[] minDistance = new float[points.length];
         Arrays.fill(minDistance, Float.MAX_VALUE);
 
-        for (SparseList<Node> sparseList : graphList) {
+        List<SparseList<Node>> sparseLists = graph.graph();
+        for (SparseList<Node> sparseList : sparseLists) {
             for (Node node : sparseList.getContent()) {
                 for (int i = 0; i < points.length; i++) {
                     float currentDistance = GraphFactory.getDistance(points[i], node.coordinates());
@@ -119,6 +126,10 @@ public class Router {
                 }
             }
         }
-        return result;
+        Map<Point, Node> closestNodes = new HashMap<>();
+        for (int i = 0; i < points.length; i++) {
+            closestNodes.put(points[i], result.get(i));
+        }
+        return closestNodes;
     }
 }

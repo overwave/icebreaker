@@ -49,4 +49,5 @@ public class VelocityIntervalService {
 
         velocityIntervalRepository.saveAllAndFlush(unsavedVelocityIntervals);
     }
+
 }

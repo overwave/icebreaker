@@ -35,7 +35,8 @@ public enum IceClassGroup {
     @Getter
     private final boolean icebreaker;
 
-    public Entry<MovementType, Float> getCharacteristics(float integralVelocity, float speed) {
+    public Entry<MovementType, Float> getCharacteristics(float integralVelocity, float speed,
+                                                         MovementType movementType) {
         if (integralVelocity < 10) {
             return Map.entry(MovementType.FORBIDDEN, 0F);
         }
@@ -51,6 +52,11 @@ public enum IceClassGroup {
         if (icebreaker) {
             return Map.entry(characteristics.getKey(), integralVelocity * characteristics.getValue());
         } else {
+            if (characteristics.getKey() == MovementType.FOLLOWING && movementType == MovementType.INDEPENDENT) {
+                return Map.entry(characteristics.getKey(), speed * 0);
+            } else if (characteristics.getKey() == MovementType.INDEPENDENT && movementType == MovementType.FOLLOWING) {
+                return Map.entry(characteristics.getKey(), speed * 1);
+            }
             return Map.entry(characteristics.getKey(), speed * characteristics.getValue());
         }
     }
