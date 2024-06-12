@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/icebreaker/api/navigation", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -28,8 +29,8 @@ public class NavigationRequestController {
     private final DefaultRouteService defaultRouteService;
 
     @GetMapping("/navigation-points")
-    public NavigationPointListDto getNavigationPoints() {
-        return new NavigationPointListDto(navigationPointService.getNavigationPoints());
+    public List<NavigationPointDto> getNavigationPoints() {
+        return navigationPointService.getNavigationPoints();
     }
 
     @SneakyThrows
