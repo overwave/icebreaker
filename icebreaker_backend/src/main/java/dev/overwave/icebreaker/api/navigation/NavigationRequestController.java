@@ -3,6 +3,7 @@ package dev.overwave.icebreaker.api.navigation;
 import dev.overwave.icebreaker.core.geospatial.VelocityIntervalService;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestService;
+import dev.overwave.icebreaker.core.route.DefaultRouteService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.MediaType;
@@ -24,6 +25,7 @@ public class NavigationRequestController {
     private final NavigationPointService navigationPointService;
     private final NavigationRequestService navigationRequestService;
     private final VelocityIntervalService velocityIntervalService;
+    private final DefaultRouteService defaultRouteService;
 
     @GetMapping("/navigation-points")
     public NavigationPointListDto getNavigationPoints() {
@@ -58,6 +60,13 @@ public class NavigationRequestController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public void resetIntegralVelocities(@RequestParam MultipartFile file) {
         velocityIntervalService.resetIntegralVelocities(file.getInputStream());
+    }
+
+    @SneakyThrows
+    @PutMapping("/default-routes")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void resetDefaultRoutes() {
+        defaultRouteService.createAllDefaultRoutes();
     }
 
 }

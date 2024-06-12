@@ -1,7 +1,7 @@
 package dev.overwave.icebreaker.core.navigation;
 
 import dev.overwave.icebreaker.api.navigation.NavigationPointDto;
-import dev.overwave.icebreaker.core.exception.NavigationPointsInfoIsAlreadyExists;
+import dev.overwave.icebreaker.core.exception.NavigationPointsInfoAlreadyExists;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,8 +27,8 @@ public class NavigationPointService {
     }
 
     public void resetNavigationPoints(InputStream inputStream) {
-        if(navigationPointRepository.count() > 0) {
-            throw new NavigationPointsInfoIsAlreadyExists();
+        if (navigationPointRepository.count() > 0) {
+            throw new NavigationPointsInfoAlreadyExists();
         }
         List<NavigationPoint> unsavedPoints = XlsxParser.parseNavigationPointsTable(inputStream);
         navigationPointRepository.deleteAll();
@@ -37,7 +37,8 @@ public class NavigationPointService {
         Map<Integer, NavigationPoint> pointByExternalId = points.stream()
                 .collect(Collectors.toMap(NavigationPoint::getExternalId, Function.identity()));
 
-        List<NavigationRoute> navigationRoutes = unsavedPoints.stream().flatMap(point -> point.getRoutes1().stream()).toList();
+        List<NavigationRoute> navigationRoutes =
+                unsavedPoints.stream().flatMap(point -> point.getRoutes1().stream()).toList();
         for (NavigationRoute route : navigationRoutes) {
             route.setPoint1(pointByExternalId.get(route.getPoint1().getExternalId()));
             route.setPoint2(pointByExternalId.get(route.getPoint2().getExternalId()));
