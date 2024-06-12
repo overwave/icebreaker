@@ -5,14 +5,10 @@ import dev.overwave.icebreaker.api.navigation.NavigationPointDto;
 import dev.overwave.icebreaker.configuration.FunctionalTest;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
-import dev.overwave.icebreaker.core.geospatial.RawVelocity;
-import dev.overwave.icebreaker.core.geospatial.SpatialVelocity;
-import dev.overwave.icebreaker.core.geospatial.SpatialVelocityFactory;
 import dev.overwave.icebreaker.core.graph.Graph;
-import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
-import dev.overwave.icebreaker.core.parser.XlsxParser;
+import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.core.ship.IceClass;
 import dev.overwave.icebreaker.core.ship.Ship;
 import dev.overwave.icebreaker.util.FileUtils;
@@ -42,16 +38,21 @@ class RouterTest {
     @SneakyThrows
     void buildRoute() {
         navigationPointService.resetNavigationPoints(FileUtils.fromClassPath("/ГрафДанные.xlsx"));
-        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
-        List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
-        Graph graph = GraphFactory.buildWeightedGraph(spatialVelocities);
+        Graph graph = SerializationUtils.readWeightedGraph("data/graph.lz4");
 
         Map<String, Point> pointsByName = navigationPointService.getNavigationPoints().stream()
                 .collect(Collectors.toMap(NavigationPointDto::name, NavigationPointDto::point));
         Point from = pointsByName.get("Карские ворота");
-        Point to = pointsByName.get("Мыс Желания");
+        Point to = pointsByName.get("остров Врангеля");
 
+        long before1 = System.currentTimeMillis();
         Map<Point, Node> pointNodeMap = Router.findClosestNodes(graph, from, to);
+        System.out.println((System.currentTimeMillis() - before1) + " millis");
+
+        long before2 = System.currentTimeMillis();
+        Map<Point, Node> pointNodeMap2 = Router.findClosestNodesFast(graph, from, to);
+        System.out.println((System.currentTimeMillis() - before2) + " millis");
+
         Route route = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(), graph,
                 new Ship("Плот", IceClass.ICE_2, 16, false, null, null),
                 MovementType.FOLLOWING, 0L).orElseThrow();

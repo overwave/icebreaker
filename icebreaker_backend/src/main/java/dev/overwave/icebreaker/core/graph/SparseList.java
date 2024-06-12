@@ -27,6 +27,24 @@ public class SparseList<T> {
         return get(index >> sparseFactor);
     }
 
+    public T getClosestSparse(int index) {
+        int factor = 1 << sparseFactor;
+        if (index % factor != 0) {
+            for (int offset = 1; offset < factor; offset++) {
+                T right = getSparse(index + offset);
+                if (right != null) {
+                    return right;
+                }
+                T left = getSparse(index - offset);
+                if (left != null) {
+                    return left;
+                }
+            }
+            return null;
+        }
+        return get(index >> sparseFactor);
+    }
+
     public T get(int index) {
         return ListUtils.getOrNull(list, index);
     }

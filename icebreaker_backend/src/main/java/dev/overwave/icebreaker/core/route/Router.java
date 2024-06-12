@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -131,5 +132,39 @@ public class Router {
             closestNodes.put(points[i], result.get(i));
         }
         return closestNodes;
+    }
+
+    public Map<Point, Node> findClosestNodesFast(Graph graph, Point... points) {
+        List<SparseList<Node>> sparseLists = graph.graph();
+        List<Float> latitudes = sparseLists.stream()
+                .map(sparseList -> sparseList.getContent().getFirst())
+                .map(node -> node.coordinates().lat()).toList();
+        List<Float> longitudes = sparseLists.getFirst().getContent().stream()
+                .map(node -> node.coordinates().lon()).toList();
+
+        Map<Point, Node> closestNodes = new HashMap<>();
+        for (Point point : points) {
+            int closestLongitudeIndex = findClosestIndex(point.lon(), longitudes);
+            int closestLatitudesIndex = findClosestIndex(point.lat(), latitudes);
+            Node node = sparseLists.get(closestLatitudesIndex).getClosestSparse(closestLongitudeIndex);
+            closestNodes.put(point, node);
+        }
+        return closestNodes;
+    }
+
+    private int findClosestIndex(float value, List<Float> array) {
+        if (value <= array.get(0)) {
+            return 0;
+        }
+        if (value >= array.get(array.size() - 1)) {
+            return array.size() - 1;
+        }
+        int result = Collections.binarySearch(array, value);
+        if (result >= 0) {
+            return result;
+        }
+        int insertionPoint = -result - 1;
+        return (array.get(insertionPoint) - value) < (value - array.get(insertionPoint - 1)) ?
+                insertionPoint : insertionPoint - 1;
     }
 }
