@@ -104,6 +104,17 @@ public class VelocityLayerGenerator {
                     (int) (Mercator.pointToMercator(spatialVelocity.bottomLeft(), zoom).getValue() - y * TILE_SIZE),
             };
             graphics.fillPolygon(xPoints, yPoints, 4);
+
+            // draw beyond 180deg
+            for (int xPoint : xPoints) {
+                int offset = 2 << zoom + 7;
+                if (xPoint > offset) {
+                    int[] xPointsLeft = new int[]{xPoints[0] - offset, xPoints[1] - offset,
+                            xPoints[2] - offset, xPoints[3] - offset,};
+                    graphics.fillPolygon(xPointsLeft, yPoints, 4);
+                    break;
+                }
+            }
         }
         if (isDirty(tile)) {
             File file = new File(TILE_GENERATION_PATH.formatted(date, zoom, x, y));
