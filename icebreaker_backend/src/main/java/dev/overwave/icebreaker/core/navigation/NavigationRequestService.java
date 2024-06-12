@@ -5,6 +5,7 @@ import dev.overwave.icebreaker.core.ship.Ship;
 import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.user.User;
 import dev.overwave.icebreaker.core.user.UserRepository;
+import dev.overwave.icebreaker.core.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,8 +31,14 @@ public class NavigationRequestService {
 
     public List<NavigationRequestDto> getNavigationRequests(String login) {
         User user = userRepository.findByLoginOrThrow(login);
+        if (user.getRole().equals(UserRole.ADMIN)) {
+            return navigationRequestRepository.findAll().stream()
+                    .map(navigationRequestMapper::toNavigationRequestDto)
+                    .toList();
+        }
         return user.getShips().stream()
                 .flatMap(ship -> ship.getNavigationRequests().stream())
+                .filter(request -> request.getStatus() != RequestStatus.APPROVED)
                 .map(navigationRequestMapper::toNavigationRequestDto)
                 .toList();
     }

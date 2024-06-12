@@ -1,6 +1,7 @@
 package dev.overwave.icebreaker.core.navigation;
 
 import dev.overwave.icebreaker.core.database.LongId;
+import dev.overwave.icebreaker.core.geospatial.Point;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
@@ -32,4 +33,8 @@ public class NavigationPoint extends LongId {
 
     @OneToMany(mappedBy = "point2")
     private List<NavigationRoute> routes2;
+
+    public Point getPoint() {
+        return new Point(lat, lon);
+    }
 }

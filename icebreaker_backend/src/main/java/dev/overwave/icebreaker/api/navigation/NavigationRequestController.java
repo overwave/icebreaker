@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
-import java.util.List;
 
 @RestController
 @RequestMapping(path = "/icebreaker/api/navigation", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -27,8 +26,8 @@ public class NavigationRequestController {
     private final VelocityIntervalService velocityIntervalService;
 
     @GetMapping("/navigation-points")
-    public List<NavigationPointDto> getNavigationPoints() {
-        return navigationPointService.getNavigationPoints();
+    public NavigationPointListDto getNavigationPoints() {
+        return new NavigationPointListDto(navigationPointService.getNavigationPoints());
     }
 
     @SneakyThrows
@@ -39,6 +38,7 @@ public class NavigationRequestController {
     }
 
     @PutMapping("/route-requests")
+    //TODO поправить дату подачи - LocalDate
     public void addNavigationRequest(@RequestBody NavigationRequestDto requestDto) {
         navigationRequestService.saveNavigationRequest(requestDto);
     }
