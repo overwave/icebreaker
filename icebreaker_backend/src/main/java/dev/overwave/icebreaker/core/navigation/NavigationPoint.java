@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Entity
 @AllArgsConstructor
@@ -36,5 +37,9 @@ public class NavigationPoint extends LongId {
 
     public Point getPoint() {
         return new Point(lat, lon);
+    }
+
+    public List<NavigationRoute> getRoutes() {
+        return Stream.concat(routes1.stream(), routes2.stream()).toList();
     }
 }
