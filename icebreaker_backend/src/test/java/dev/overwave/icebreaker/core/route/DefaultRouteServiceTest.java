@@ -33,6 +33,7 @@ public class DefaultRouteServiceTest {
         System.out.println(defaultRoute.get());
     }
 
+
     private void setup() {
         Graph graph = SerializationUtils.readWeightedGraph("data/graph.lz4");
         List<VelocityInterval> intervals = graph.getFirstVelocities().stream()

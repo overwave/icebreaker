@@ -55,8 +55,14 @@ public class DefaultRouteService {
                             iceGroup.isIcebreaker(), null, null);
                     Point from = edge.getPoint1().getPoint();
                     Point to = edge.getPoint2().getPoint();
-                    Optional<Route> routeOFollowing = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to),
-                            interval.getStartDate(), graph, ship, MovementType.FOLLOWING, 0L);
+                    Optional<Route> routeOFollowing = Router.createRoute(
+                            pointNodeMap.get(from),
+                            pointNodeMap.get(to),
+                            interval.getStartDate(),
+                            graph,
+                            ship,
+                            MovementType.FOLLOWING,
+                            0L);
                     if (routeOFollowing.isEmpty()) {
                         DefaultRoute defaultRouteImpossible = DefaultRoute.builder()
                                 .edge(edge)
@@ -84,11 +90,14 @@ public class DefaultRouteService {
                                 .build();
                         defaultRouteRepository.save(defaultRouteFollowing);
 
-                        Optional<Route> routeOIndependent = Router.createRoute(pointNodeMap.get(from),
+                        Optional<Route> routeOIndependent = Router.createRoute(
+                                pointNodeMap.get(from),
                                 pointNodeMap.get(to),
                                 interval.getStartDate(),
                                 graph,
-                                ship, MovementType.INDEPENDENT, travelTimeFollowing);
+                                ship,
+                                MovementType.INDEPENDENT,
+                                travelTimeFollowing);
                         if(routeOIndependent.isPresent()) {
                             Route routeIndependent = routeOIndependent.get();
                             long travelTimeIndependent = routeIndependent.interval().duration().toMinutes();
