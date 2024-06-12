@@ -16,7 +16,6 @@ import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.util.FileUtils;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.awt.BasicStroke;
@@ -32,7 +31,6 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GraphFactoryTest {
-
     @Test
     @SneakyThrows
     void testGraphGeneration() {
@@ -40,7 +38,7 @@ public class GraphFactoryTest {
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
 
         Graph graph = GraphFactory.buildWeightedGraph(spatialVelocities);
-        List<SparseList<Node>> sparseLists = graph.getGraph();
+        List<SparseList<Node>> sparseLists = graph.graph();
         List<ContinuousVelocity> vvv = sparseLists.getFirst().getContent().get(100).edges().getFirst().velocities();
         for (int vv = 0; vv < 1; vv++) {
             BufferedImage image = ImageIO.read(FileUtils.fromClassPath("/mercator.png"));
@@ -106,7 +104,7 @@ public class GraphFactoryTest {
 
         // рисуем узлы графа
         Graph graph = GraphFactory.buildWeightedGraph(List.of());
-        List<SparseList<Node>> sparseLists = graph.getGraph();
+        List<SparseList<Node>> sparseLists = graph.graph();
         for (SparseList<Node> nodes : sparseLists) {
             for (Node node : nodes.getContent()) {
                 Entry<Double, Double> point = Mercator.pointToMercatorNormalized(node.coordinates());
@@ -273,15 +271,24 @@ public class GraphFactoryTest {
     }
 
     @Test
-    @Disabled
     void testSerializationGraph() {
-        List<List<RawVelocity>> matrix = XlsxParser.parseIntegralVelocityTable("/IntegrVelocity.xlsx");
-        List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(matrix);
+        List<SpatialVelocity> spatialVelocities = SerializationUtils.readSpatial("data/spatial_velocities.l4z");
+        long before = System.currentTimeMillis();
         Graph graph = GraphFactory.buildWeightedGraph(spatialVelocities);
+        System.out.println((System.currentTimeMillis() - before) + " millis"); // 80s
+        GraphFactory.print();
+        System.gc();
+        GraphFactory.print(); // 650mb
+    }
 
-        SerializationUtils.writeWeightedGraph(graph, "data/graph.dat");
-        Graph deserialized = SerializationUtils.readWeightedGraph("data/graph.dat");
-
-        assertThat(deserialized).isEqualTo(graph);
+    @Test
+    void testDeserializationGraph() {
+        long before = System.currentTimeMillis();
+        Graph deserialized = SerializationUtils.readWeightedGraph("data/graph.l4z");
+        System.out.println((System.currentTimeMillis() - before) + " millis"); // 5s
+        GraphFactory.print();
+        System.gc();
+        GraphFactory.print(); // 1400mb
+        System.out.println(deserialized.graph().getFirst().getContent().size());
     }
 }

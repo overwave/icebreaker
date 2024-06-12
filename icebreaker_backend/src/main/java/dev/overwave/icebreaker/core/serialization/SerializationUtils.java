@@ -10,8 +10,10 @@ import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.SparseList;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
+import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
+import net.jpountz.xxhash.XXHashFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -34,9 +36,7 @@ public class SerializationUtils {
     @SneakyThrows
     public void writeSpatial(List<SpatialVelocity> spatialVelocities, String path) {
         new File(path).getParentFile().mkdirs();
-        try (DataOutputStream outputStream = new DataOutputStream(
-                new LZ4FrameOutputStream(new FileOutputStream(path)))
-        ) {
+        try (DataOutputStream outputStream = highCompressionOutputStream(path)) {
             outputStream.writeInt(spatialVelocities.size());
             Map<Interval, Integer> intervals = serializeIntervals(outputStream,
                     spatialVelocities.getFirst().velocities());
@@ -104,7 +104,7 @@ public class SerializationUtils {
         }
     }
 
-    private static List<Interval> deserializeIntervals(DataInputStream inputStream) throws IOException {
+    private List<Interval> deserializeIntervals(DataInputStream inputStream) throws IOException {
         int intervalSize = inputStream.readByte();
         List<Interval> intervals = new ArrayList<>(intervalSize);
         for (int j = 0; j < intervalSize; j++) {
@@ -116,16 +116,16 @@ public class SerializationUtils {
 
     @SneakyThrows
     public void writeWeightedGraph(Graph graph, String path) {
-        try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(path))) {
-            List<ContinuousVelocity> velocities = graph.getGraph().getFirst().getContent().stream()
+        try (DataOutputStream outputStream = highCompressionOutputStream(path)) {
+            List<ContinuousVelocity> velocities = graph.graph().getFirst().getContent().stream()
                     .filter(node -> !node.edges().isEmpty()).findFirst().orElseThrow()
                     .edges().getFirst().velocities();
             Map<Interval, Integer> intervals = serializeIntervals(outputStream, velocities);
-            Map<Point, Integer> points = serializePoints(outputStream, graph.getGraph());
+            Map<Point, Integer> points = serializePoints(outputStream, graph.graph());
 
-            outputStream.writeInt(graph.getGraph().size());
+            outputStream.writeInt(graph.graph().size());
             List<Edge> edgesToSerialize = new ArrayList<>();
-            for (SparseList<Node> sparseList : graph.getGraph()) {
+            for (SparseList<Node> sparseList : graph.graph()) {
                 outputStream.writeByte(sparseList.getSparseFactor());
                 List<Node> nodes = sparseList.getContent();
                 outputStream.writeInt(nodes.size());
@@ -170,7 +170,7 @@ public class SerializationUtils {
 
     @SneakyThrows
     public Graph readWeightedGraph(String path) {
-        try (DataInputStream inputStream = new DataInputStream(new FileInputStream(path))) {
+        try (DataInputStream inputStream = new DataInputStream(new LZ4FrameInputStream(new FileInputStream(path)))) {
             List<Interval> intervals = deserializeIntervals(inputStream);
             List<Point> points = deserializePoints(inputStream);
             Map<Integer, Node> nodesMap = new HashMap<>();
@@ -188,24 +188,40 @@ public class SerializationUtils {
                     nodes.add(node);
                     nodesMap.put(pointIndex, node);
                 }
-                int edgesSize = inputStream.readInt();
-                for (int j = 0; j < edgesSize; j++) {
-                    Node left = nodesMap.get(inputStream.readInt());
-                    Node right = nodesMap.get(inputStream.readInt());
-                    float distance = inputStream.readFloat();
-
-                    List<ContinuousVelocity> velocities = new ArrayList<>(intervals.size());
-                    for (int k = 0; k < intervals.size(); k++) {
-                        velocities.add(new ContinuousVelocity(
-                                inputStream.readFloat(),
-                                intervals.get(inputStream.readByte())));
-                    }
-
-                    Edge edge = new Edge(Map.entry(left, right), distance, velocities);
-                    left.edges().add(edge);
-                    right.edges().add(edge);
-                }
                 sparseLists.add(new SparseList<>(sparseFactor, nodes));
+            }
+
+            int edgesSize = inputStream.readInt();
+            Map<Float, Map<Byte, ContinuousVelocity>> continuousVelocityMap = new HashMap<>();
+            for (int j = 0; j < edgesSize; j++) {
+                Node left = nodesMap.get(inputStream.readInt());
+                Node right = nodesMap.get(inputStream.readInt());
+                float distance = inputStream.readFloat();
+
+                List<ContinuousVelocity> velocities = new ArrayList<>(intervals.size());
+                for (int k = 0; k < intervals.size(); k++) {
+                    float velocity = inputStream.readFloat();
+                    byte intervalIndex = inputStream.readByte();
+                    Map<Byte, ContinuousVelocity> intervalToVelocity = continuousVelocityMap.get(velocity);
+                    if (intervalToVelocity == null) {
+                        Map<Byte, ContinuousVelocity> map = new HashMap<>();
+                        map.put(intervalIndex, new ContinuousVelocity(velocity, intervals.get(intervalIndex)));
+                        continuousVelocityMap.put(velocity, map);
+                        continue;
+                    }
+                    ContinuousVelocity cachedVelocity = intervalToVelocity.get(intervalIndex);
+                    if (cachedVelocity == null) {
+                        var continuousVelocity = new ContinuousVelocity(velocity, intervals.get(intervalIndex));
+                        intervalToVelocity.put(intervalIndex, continuousVelocity);
+                        velocities.add(continuousVelocity);
+                    } else {
+                        velocities.add(cachedVelocity);
+                    }
+                }
+
+                Edge edge = new Edge(Map.entry(left, right), distance, velocities);
+                left.edges().add(edge);
+                right.edges().add(edge);
             }
             return new Graph(sparseLists);
         }
@@ -219,5 +235,18 @@ public class SerializationUtils {
             points.add(readPoint(inputStream));
         }
         return points;
+    }
+
+    @SneakyThrows
+    private DataOutputStream highCompressionOutputStream(String path) {
+        FileOutputStream fos = new FileOutputStream(path);
+        return new DataOutputStream(new LZ4FrameOutputStream(
+                fos,
+                LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB,
+                -1,
+                LZ4Factory.fastestInstance().highCompressor(16 + 1),
+                XXHashFactory.fastestInstance().hash32(),
+                LZ4FrameOutputStream.FLG.Bits.BLOCK_INDEPENDENCE
+        ));
     }
 }

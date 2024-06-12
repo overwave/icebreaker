@@ -31,7 +31,7 @@ public class Router {
     public static final float KNOTS_TO_METER_PER_MINUTES = 1852F / 60F;
 
     public Optional<Route> createRoute(Point pointFrom, Point pointTo, Instant startDate, Graph graph, Ship ship) {
-        List<Node> closestNodes = findClosestNodes(graph.getGraph(), pointFrom, pointTo);
+        List<Node> closestNodes = findClosestNodes(graph.graph(), pointFrom, pointTo);
         Node from = closestNodes.getFirst();
         Node to = closestNodes.getLast();
 
