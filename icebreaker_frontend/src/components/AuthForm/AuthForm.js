@@ -1,5 +1,6 @@
 import "./AuthForm.css";
 import { NavLink } from "react-router-dom";
+import logo from "../../images/auth-logo.svg";
 
 function AuthForm({
   onSubmit,
@@ -22,6 +23,7 @@ function AuthForm({
 
   return (
     <section className="auth">
+      <img className="auth__logo" src={logo} alt="Атомфлот" />
       <form className="auth__form" onSubmit={handleSubmit}>
         <div className="auth__block">
           <h1 className="auth__title">{title}</h1>
