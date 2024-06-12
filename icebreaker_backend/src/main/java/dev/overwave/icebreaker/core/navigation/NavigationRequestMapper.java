@@ -28,7 +28,7 @@ public class NavigationRequestMapper {
                 navigationRequest.getFinishPoint().getId(),
                 navigationRequest.getFinishPoint().getName(),
                 icebreaker.getName(),
-                icebreaker.getIceClass().getDescription() + " , " + icebreaker.getSpeed() + " узлов");
+                icebreaker.getIceClass().getDescription() + ", " + icebreaker.getSpeed() + " узлов");
 
     }
 
@@ -39,7 +39,7 @@ public class NavigationRequestMapper {
                 navigationRequest.getStatus(),
                 ship.getId(),
                 ship.getName(),
-                ship.getIceClass().getDescription() + " , " + ship.getSpeed() + " узлов",
+                ship.getIceClass().getDescription() + ", " + ship.getSpeed() + " узлов",
                 instantToLocalDate(navigationRequest.getStartDate()),
                 navigationRequest.getStartPoint().getId(),
                 navigationRequest.getStartPoint().getName(),
@@ -55,7 +55,7 @@ public class NavigationRequestMapper {
                 navigationRequest.getId(),
                 ship.getId(),
                 ship.getName(),
-                ship.getIceClass().getDescription() + " , " + ship.getSpeed() + " узлов",
+                ship.getIceClass().getDescription() + ", " + ship.getSpeed() + " узлов",
                 convoy,
                 routes
         );
