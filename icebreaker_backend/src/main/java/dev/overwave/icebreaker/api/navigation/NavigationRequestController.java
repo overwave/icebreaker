@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.attribute.UserPrincipal;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -42,8 +42,8 @@ public class NavigationRequestController {
     }
 
     @GetMapping("/route-requests")
-    public NavigationRequestListDto getNavigationRequests(UserPrincipal userPrincipal) {
-        return new NavigationRequestListDto(navigationRequestService.getNavigationRequests(userPrincipal.getName()));
+    public NavigationRequestListDto getNavigationRequests(Principal principal) {
+        return new NavigationRequestListDto(navigationRequestService.getNavigationRequests(principal.getName()));
     }
 
     @GetMapping("/velocity-intervals")
