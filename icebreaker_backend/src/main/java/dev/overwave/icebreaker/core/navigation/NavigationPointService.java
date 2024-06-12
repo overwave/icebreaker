@@ -1,6 +1,7 @@
 package dev.overwave.icebreaker.core.navigation;
 
 import dev.overwave.icebreaker.api.navigation.NavigationPointDto;
+import dev.overwave.icebreaker.core.exception.NavigationPointsInfoIsAlreadyExists;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,9 @@ public class NavigationPointService {
     }
 
     public void resetNavigationPoints(InputStream inputStream) {
+        if(navigationPointRepository.count() > 0) {
+            throw new NavigationPointsInfoIsAlreadyExists();
+        }
         List<NavigationPoint> unsavedPoints = XlsxParser.parseNavigationPointsTable(inputStream);
         navigationPointRepository.deleteAll();
         navigationRouteRepository.deleteAll();

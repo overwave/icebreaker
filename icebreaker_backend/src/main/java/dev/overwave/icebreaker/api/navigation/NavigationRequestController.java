@@ -6,6 +6,7 @@ import dev.overwave.icebreaker.core.navigation.NavigationRequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +33,7 @@ public class NavigationRequestController {
 
     @SneakyThrows
     @PutMapping("/navigation-points")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public void resetNavigationPoints(@RequestParam MultipartFile file) {
         navigationPointService.resetNavigationPoints(file.getInputStream());
     }
@@ -53,6 +55,7 @@ public class NavigationRequestController {
 
     @SneakyThrows
     @PutMapping("/integral-velocities")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public void resetIntegralVelocities(@RequestParam MultipartFile file) {
         velocityIntervalService.resetIntegralVelocities(file.getInputStream());
     }
