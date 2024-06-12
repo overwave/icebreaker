@@ -31,8 +31,6 @@ public class Router {
 
     public static final float KNOTS_TO_METER_PER_MINUTES = 1852F / 60F;
 
-//    public Map<Point, Node> findClosestNodes(Graph graph, Point... points) {}
-
     public Optional<Route> createRoute(Node from, Node to, Instant startDate, Graph graph, Ship ship,
                                        MovementType movementType, long referenceTime) {
         PriorityQueue<Entry<Node, Integer>> queue = new PriorityQueue<>(Comparator.comparingInt(Entry::getValue));
