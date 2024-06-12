@@ -1,7 +1,7 @@
 package dev.overwave.icebreaker.core.geospatial;
 
 import dev.overwave.icebreaker.api.navigation.VelocityIntervalDto;
-import dev.overwave.icebreaker.core.exception.VelocityIntegralInfoIsAlreadyExists;
+import dev.overwave.icebreaker.core.exception.VelocityIntegralInfoAlreadyExists;
 import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
@@ -27,7 +27,7 @@ public class VelocityIntervalService {
 
     public void resetIntegralVelocities(InputStream inputStream) {
         if(velocityIntervalRepository.count() > 0) {
-            throw new VelocityIntegralInfoIsAlreadyExists();
+            throw new VelocityIntegralInfoAlreadyExists();
         }
         // парсим данные о ледовой проходимости
         List<List<RawVelocity>> unsavedRawVelocities = XlsxParser.parseIntegralVelocityTable(inputStream);
@@ -42,10 +42,10 @@ public class VelocityIntervalService {
                 .toList();
         // пишем в файл новые данные о ледовой проходимости в виде сетки
         List<SpatialVelocity> spatialVelocities = SpatialVelocityFactory.formSpatialVelocityGrid(unsavedRawVelocities);
-        SerializationUtils.writeSpatial(spatialVelocities, "data/spatial_velocities.l4z");
+        SerializationUtils.writeSpatial(spatialVelocities, "data/spatial_velocities.lz4");
 
         Graph graph = GraphFactory.buildWeightedGraph(spatialVelocities);
-        SerializationUtils.writeWeightedGraph(graph, "data/graph.l4z");
+        SerializationUtils.writeWeightedGraph(graph, "data/graph.lz4");
 
         velocityIntervalRepository.saveAllAndFlush(unsavedVelocityIntervals);
     }

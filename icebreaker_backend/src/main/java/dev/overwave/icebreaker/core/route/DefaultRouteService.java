@@ -32,7 +32,7 @@ public class DefaultRouteService {
     public void createAllDefaultRoutes() {
         List<NavigationRoute> edges = navigationRouteRepository.findAll();
         List<VelocityInterval> intervals = velocityIntervalRepository.findAll();
-        Graph graph = SerializationUtils.readWeightedGraph("data/graph.l4z");
+        Graph graph = SerializationUtils.readWeightedGraph("data/graph.lz4");
 
         for (NavigationRoute edge : edges) {
             for (VelocityInterval interval : intervals) {
