@@ -5,7 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface NavigationRequestRepository extends JpaRepository<NavigationRequest, Long> {
-    List<NavigationRequest> findAllByShipIdIn(List<Long> shipIds);
-
     List<NavigationRequest> findAllByStatus(RequestStatus status);
 }
