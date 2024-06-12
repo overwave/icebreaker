@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -53,16 +54,16 @@ class RouterTest {
         Map<Point, Node> pointNodeMap2 = Router.findClosestNodesFast(graph, from, to);
         System.out.println((System.currentTimeMillis() - before2) + " millis");
 
-        Route route = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(), graph,
+        Route route = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(),
                 new Ship("Плот", IceClass.ICE_2, 16, false, null, null),
-                MovementType.FOLLOWING, 0L).orElseThrow();
+                MovementType.FOLLOWING, Duration.ZERO).orElseThrow();
         printRoute(route, "route_novaya_zemlya.json");
 
         from = pointsByName.get("Дудинка");
         to = pointsByName.get("Архангельск");
-        Route route2 = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(), graph,
+        Route route2 = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(),
                 new Ship("Кобаблище", IceClass.ARC_7, 13, false, null, null),
-                MovementType.FOLLOWING, 0L).orElseThrow();
+                MovementType.FOLLOWING, Duration.ZERO).orElseThrow();
         printRoute(route2, "route_dudinka.json");
 
         Point from2 = new Point(69.5F, 33.75F);
@@ -70,9 +71,9 @@ class RouterTest {
         Instant startDate = Instant.parse("2020-04-05T00:00:00Z");
         Ship ship = new Ship("Ship", IceClass.ARC_5, 16F, false, null, null);
 
-        Optional<Route> route3 = Router.createRoute(pointNodeMap.get(from2), pointNodeMap.get(to2), startDate, graph,
+        Optional<Route> route3 = Router.createRoute(pointNodeMap.get(from2), pointNodeMap.get(to2), startDate,
                 ship,
-                MovementType.FOLLOWING, 0L);
+                MovementType.FOLLOWING, Duration.ZERO);
         assertThat(route3).isPresent();
         assertThat(route3.get().interval().instant()).isBefore(Instant.parse("2020-04-10T00:00:00Z"));
 

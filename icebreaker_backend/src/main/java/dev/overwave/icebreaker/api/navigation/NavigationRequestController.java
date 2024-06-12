@@ -1,7 +1,5 @@
 package dev.overwave.icebreaker.api.navigation;
 
-import dev.overwave.icebreaker.api.dto_for_Balya.NavigationRequestListDtoForBalya;
-import dev.overwave.icebreaker.api.dto_for_Balya.NavigationRequestsDtoWithRoute;
 import dev.overwave.icebreaker.core.geospatial.VelocityIntervalService;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestService;
@@ -47,8 +45,9 @@ public class NavigationRequestController {
     }
 
     @GetMapping("/route-requests/pending")
-    public NavigationRequestListDtoForBalya getPendingNavigationRequests(Principal principal) {
-        return new NavigationRequestListDtoForBalya(navigationRequestService.getNavigationRequestsPending(principal.getName()));
+    public NavigationRequestPendingListDto getPendingNavigationRequests(Principal principal) {
+        return new NavigationRequestPendingListDto(
+                navigationRequestService.getNavigationRequestsPending(principal.getName()));
     }
 
     @GetMapping("/route-requests")

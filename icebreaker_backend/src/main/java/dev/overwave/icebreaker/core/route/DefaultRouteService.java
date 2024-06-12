@@ -20,10 +20,11 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -49,71 +50,69 @@ public class DefaultRouteService {
 
         for (NavigationRoute edge : edges) {
             for (VelocityInterval interval : intervals) {
-                for (IceClassGroup iceGroup : IceClassGroup.values()) {
+                for (IceClassGroup iceClassGroup : IceClassGroup.values()) {
 
-                    Ship ship = new Ship("ship", iceClassByGroup.get(iceGroup), REFERENCE_SPEED,
-                            iceGroup.isIcebreaker(), null, null);
+                    Ship ship = new Ship("ship", iceClassByGroup.get(iceClassGroup), REFERENCE_SPEED,
+                            iceClassGroup.isIcebreaker(), null, null);
                     Point from = edge.getPoint1().getPoint();
                     Point to = edge.getPoint2().getPoint();
-                    Optional<Route> routeOFollowing = Router.createRoute(
+                    Optional<Route> routeFollowingO = Router.createRoute(
                             pointNodeMap.get(from),
                             pointNodeMap.get(to),
                             interval.getStartDate(),
-                            graph,
                             ship,
                             MovementType.FOLLOWING,
-                            0L);
-                    if (routeOFollowing.isEmpty()) {
+                            Duration.ZERO);
+                    if (routeFollowingO.isEmpty()) {
                         DefaultRoute defaultRouteImpossible = DefaultRoute.builder()
                                 .edge(edge)
-                                .iceGroup(iceGroup)
+                                .iceClassGroup(iceClassGroup)
                                 .velocityInterval(interval)
-                                .travelTime(Duration.ZERO.toMinutes())
+                                .travelTimeMinutes(Duration.ZERO.toMinutes())
                                 .distance(Float.POSITIVE_INFINITY)
                                 .possible(false)
                                 .nodes("")
                                 .movementType(MovementType.FORBIDDEN)
                                 .build();
                         defaultRouteRepository.save(defaultRouteImpossible);
-                    } else {
-                        Route routeFollowing = routeOFollowing.get();
-                        long travelTimeFollowing = routeFollowing.interval().duration().toMinutes();
+                        continue;
+                    }
+                    Route routeFollowing = routeFollowingO.get();
+                    Duration travelTimeFollowing = routeFollowing.interval().duration();
 
-                        Optional<Route> routeOIndependent = Router.createRoute(
-                                pointNodeMap.get(from),
-                                pointNodeMap.get(to),
-                                interval.getStartDate(),
-                                graph,
-                                ship,
-                                MovementType.INDEPENDENT,
-                                travelTimeFollowing);
-                        if (routeOIndependent.isPresent()) {
-                            Route routeIndependent = routeOIndependent.get();
-                            long travelTimeIndependent = routeIndependent.interval().duration().toMinutes();
-                            DefaultRoute defaultRouteIndependent = DefaultRoute.builder()
-                                    .edge(edge)
-                                    .iceGroup(iceGroup)
-                                    .velocityInterval(interval)
-                                    .travelTime(travelTimeIndependent)
-                                    .distance(routeIndependent.distance())
-                                    .possible(true)
-                                    .nodes(serializeNodes(routeIndependent.nodes()))
-                                    .movementType(MovementType.INDEPENDENT)
-                                    .build();
-                            defaultRouteRepository.save(defaultRouteIndependent);
-                        } else {
-                            DefaultRoute defaultRouteFollowing = DefaultRoute.builder()
-                                    .edge(edge)
-                                    .iceGroup(iceGroup)
-                                    .velocityInterval(interval)
-                                    .travelTime(travelTimeFollowing)
-                                    .distance(routeFollowing.distance())
-                                    .possible(true)
-                                    .nodes(serializeNodes(routeFollowing.nodes()))
-                                    .movementType(MovementType.FOLLOWING)
-                                    .build();
-                            defaultRouteRepository.save(defaultRouteFollowing);
-                        }
+                    Optional<Route> routeIndependentO = Router.createRoute(
+                            pointNodeMap.get(from),
+                            pointNodeMap.get(to),
+                            interval.getStartDate(),
+                            ship,
+                            MovementType.INDEPENDENT,
+                            travelTimeFollowing);
+                    if (routeIndependentO.isPresent()) {
+                        Route routeIndependent = routeIndependentO.get();
+                        long travelTimeIndependent = routeIndependent.interval().duration().toMinutes();
+                        DefaultRoute defaultRouteIndependent = DefaultRoute.builder()
+                                .edge(edge)
+                                .iceClassGroup(iceClassGroup)
+                                .velocityInterval(interval)
+                                .travelTimeMinutes(travelTimeIndependent)
+                                .distance(routeIndependent.distance())
+                                .possible(true)
+                                .nodes(serializeNodes(routeIndependent.nodes()))
+                                .movementType(MovementType.INDEPENDENT)
+                                .build();
+                        defaultRouteRepository.save(defaultRouteIndependent);
+                    } else {
+                        DefaultRoute defaultRouteFollowing = DefaultRoute.builder()
+                                .edge(edge)
+                                .iceClassGroup(iceClassGroup)
+                                .velocityInterval(interval)
+                                .travelTimeMinutes(travelTimeFollowing.toMinutes())
+                                .distance(routeFollowing.distance())
+                                .possible(true)
+                                .nodes(serializeNodes(routeFollowing.nodes()))
+                                .movementType(MovementType.FOLLOWING)
+                                .build();
+                        defaultRouteRepository.save(defaultRouteFollowing);
                     }
                 }
             }
@@ -121,14 +120,9 @@ public class DefaultRouteService {
 
     }
 
-    private static Map<IceClassGroup, IceClass> getIceClassByGroup() {
-        Map<IceClassGroup, IceClass> iceClassByGroup = new HashMap<>();
-        iceClassByGroup.put(IceClassGroup.ICE_0_3, IceClass.ICE_2);
-        iceClassByGroup.put(IceClassGroup.ARC_4_6, IceClass.ARC_5);
-        iceClassByGroup.put(IceClassGroup.ARC_7_8, IceClass.ARC_7);
-        iceClassByGroup.put(IceClassGroup.ARC_9_TAIMIR_VAIGACH, IceClass.ARC_9_TAIMIR_VAIGACH);
-        iceClassByGroup.put(IceClassGroup.ARC_9_50_YEARS_OF_VICTORY_YAMAL, IceClass.ARC_9_50_YEARS_OF_VICTORY_YAMAL);
-        return iceClassByGroup;
+    private Map<IceClassGroup, IceClass> getIceClassByGroup() {
+        return Arrays.stream(IceClass.values())
+                .collect(Collectors.toMap(IceClass::getGroup, it -> it, (a, b) -> b));
     }
 
     @SneakyThrows

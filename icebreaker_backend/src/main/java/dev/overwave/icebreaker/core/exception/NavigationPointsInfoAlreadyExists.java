@@ -6,6 +6,6 @@ import org.springframework.web.server.ResponseStatusException;
 public class NavigationPointsInfoAlreadyExists extends ResponseStatusException {
 
     public NavigationPointsInfoAlreadyExists() {
-        super(HttpStatus.CONFLICT, ("Navigation points info is already used"));
+        super(HttpStatus.CONFLICT, "Navigation points info is already used");
     }
 }

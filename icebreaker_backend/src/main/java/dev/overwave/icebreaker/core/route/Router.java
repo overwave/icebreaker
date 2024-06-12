@@ -31,8 +31,8 @@ public class Router {
 
     public static final float KNOTS_TO_METER_PER_MINUTES = 1852F / 60F;
 
-    public Optional<Route> createRoute(Node from, Node to, Instant startDate, Graph graph, Ship ship,
-                                       MovementType movementType, long referenceTime) {
+    public Optional<Route> createRoute(Node from, Node to, Instant startDate, Ship ship,
+                                       MovementType movementType, Duration referenceTime) {
         PriorityQueue<Entry<Node, Integer>> queue = new PriorityQueue<>(Comparator.comparingInt(Entry::getValue));
         queue.add(Map.entry(from, 0));
 
@@ -48,7 +48,7 @@ public class Router {
                 int currentTravelDuration = routeSegments.get(current).durationMinutes();
                 // если текущая длительность сформированного пути в 2 раза больше, чем полный путь под проводкой
                 // ледокола - значит такой путь нам уже не подходит
-                if (movementType == MovementType.INDEPENDENT && currentTravelDuration > referenceTime * 2) {
+                if (movementType == MovementType.INDEPENDENT && currentTravelDuration > referenceTime.toMinutes() * 2) {
                     return Optional.empty();
                 }
                 Instant currentTime = startDate.plus(currentTravelDuration, ChronoUnit.MINUTES);
@@ -109,6 +109,9 @@ public class Router {
     }
 
     public Map<Point, Node> findClosestNodes(Graph graph, Point... points) {
+        if (true) {
+            return findClosestNodesFast(graph, points);
+        }
         List<Node> result = Arrays.asList(new Node[points.length]);
         float[] minDistance = new float[points.length];
         Arrays.fill(minDistance, Float.MAX_VALUE);

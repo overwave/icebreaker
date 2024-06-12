@@ -29,4 +29,8 @@ ALTER TABLE default_route
 ALTER TABLE default_route
 ADD COLUMN IF NOT EXISTS movement_type TEXT NOT NULL DEFAULT 'FORBIDDEN';
 
-
+--changeset overwave:default_route_rename_to_travel_time_minutes_ice_class_group
+ALTER TABLE default_route
+    RENAME COLUMN travel_time TO travel_time_minutes;
+ALTER TABLE default_route
+    RENAME COLUMN ice_group TO ice_class_group;

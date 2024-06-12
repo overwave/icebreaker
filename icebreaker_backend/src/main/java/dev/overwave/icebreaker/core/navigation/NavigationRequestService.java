@@ -1,10 +1,10 @@
 package dev.overwave.icebreaker.core.navigation;
 
-import dev.overwave.icebreaker.api.dto_for_Balya.NavigationRequestDtoForBalya;
-import dev.overwave.icebreaker.api.dto_for_Balya.NavigationRequestWithRouteDto;
-import dev.overwave.icebreaker.api.dto_for_Balya.NavigationRequestsDtoWithRoute;
-import dev.overwave.icebreaker.api.dto_for_Balya.RouteDtoForBalya;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
+import dev.overwave.icebreaker.api.navigation.NavigationRequestPendingDto;
+import dev.overwave.icebreaker.api.navigation.NavigationRequestWithRouteDto;
+import dev.overwave.icebreaker.api.navigation.NavigationRequestsDtoWithRoute;
+import dev.overwave.icebreaker.api.navigation.RouteSegmentDto;
 import dev.overwave.icebreaker.core.ship.Ship;
 import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.user.User;
@@ -37,45 +37,56 @@ public class NavigationRequestService {
     }
 
     public NavigationRequestsDtoWithRoute getNavigationRequests(String login) {
-        User user = userRepository.findByLoginOrThrow(login);
-        List<NavigationRequest> requests;
-        if (user.getRole().equals(UserRole.ADMIN)) {
-            requests = navigationRequestRepository.findAll();
-        } else {
-            requests = user.getShips().stream()
-                    .flatMap(ship -> ship.getNavigationRequests().stream())
-                    .toList();
-        }
+        List<NavigationRequest> requests = getRequestsByUser(login);
         Map<RequestStatus, List<NavigationRequest>> requestsByStatus = requests.stream()
                 .collect(Collectors.groupingBy(NavigationRequest::getStatus));
-        List<NavigationRequestDtoForBalya> pending = requestsByStatus.get(RequestStatus.PENDING).stream()
-                .map(navigationRequestMapper::toNavigationRequestDtoForBalya)
+        List<NavigationRequestPendingDto> pending = requestsByStatus.getOrDefault(RequestStatus.PENDING, List.of())
+                .stream()
+                .map(navigationRequestMapper::toNavigationRequestPendingDto)
                 .toList();
-        // хардкодим недостающую инфу
-        NavigationRequest first = requestsByStatus.get(RequestStatus.PENDING).getFirst();
-        List<Ship> icebreakers = shipRepository.findAllByIcebreaker(true);
-        List<RouteDtoForBalya> routes = List.of(navigationRequestMapper.toRouteDtoForBalya(first,
-                first.getStartDate().plus(1, ChronoUnit.DAYS), icebreakers.getFirst()));
-        List<NavigationRequestWithRouteDto> agreed =
-                List.of(navigationRequestMapper.toNavigationRequestWithRouteDto(first, true, routes));
         return new NavigationRequestsDtoWithRoute(
                 pending,
-                agreed,
+                getApprovedRoutes(requestsByStatus),
                 List.of()
         );
     }
 
-    public List<NavigationRequestDtoForBalya> getNavigationRequestsPending(String login) {
+    private List<NavigationRequestWithRouteDto> getApprovedRoutes(
+            Map<RequestStatus, List<NavigationRequest>> requestsByStatus) {
+        // хардкодим недостающую инфу
+        List<NavigationRequest> pending = requestsByStatus.get(RequestStatus.PENDING);
+        if (pending == null || pending.isEmpty()) {
+            return null;
+        }
+        NavigationRequest first = pending.getFirst();
+        List<Ship> icebreakers = shipRepository.findAllByIcebreaker(true);
+        RouteSegmentDto routeSegmentDto = navigationRequestMapper.toRouteSegmentDto(first,
+                first.getStartDate().plus(1, ChronoUnit.DAYS), icebreakers.getFirst());
+        return List.of(navigationRequestMapper.toNavigationRequestWithRouteDto(first, true, List.of(routeSegmentDto)));
+    }
+
+    private List<NavigationRequest> getRequestsByUser(String login) {
+        User user = userRepository.findByLoginOrThrow(login);
+        if (user.getRole().equals(UserRole.ADMIN)) {
+            return navigationRequestRepository.findAll();
+        } else {
+            return user.getShips().stream()
+                    .flatMap(ship -> ship.getNavigationRequests().stream())
+                    .toList();
+        }
+    }
+
+    public List<NavigationRequestPendingDto> getNavigationRequestsPending(String login) {
         User user = userRepository.findByLoginOrThrow(login);
         if (user.getRole().equals(UserRole.ADMIN)) {
             return navigationRequestRepository.findAllByStatus(RequestStatus.PENDING).stream()
-                    .map(navigationRequestMapper::toNavigationRequestDtoForBalya)
+                    .map(navigationRequestMapper::toNavigationRequestPendingDto)
                     .toList();
         }
         return user.getShips().stream()
                 .flatMap(ship -> ship.getNavigationRequests().stream())
                 .filter(request -> request.getStatus() == RequestStatus.PENDING)
-                .map(navigationRequestMapper::toNavigationRequestDtoForBalya)
+                .map(navigationRequestMapper::toNavigationRequestPendingDto)
                 .toList();
     }
 }

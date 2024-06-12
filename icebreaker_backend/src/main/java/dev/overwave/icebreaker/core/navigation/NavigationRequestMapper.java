@@ -1,8 +1,8 @@
 package dev.overwave.icebreaker.core.navigation;
 
-import dev.overwave.icebreaker.api.dto_for_Balya.NavigationRequestDtoForBalya;
-import dev.overwave.icebreaker.api.dto_for_Balya.NavigationRequestWithRouteDto;
-import dev.overwave.icebreaker.api.dto_for_Balya.RouteDtoForBalya;
+import dev.overwave.icebreaker.api.navigation.NavigationRequestPendingDto;
+import dev.overwave.icebreaker.api.navigation.NavigationRequestWithRouteDto;
+import dev.overwave.icebreaker.api.navigation.RouteSegmentDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import dev.overwave.icebreaker.core.ship.Ship;
 import org.springframework.stereotype.Component;
@@ -17,9 +17,9 @@ import java.util.List;
 public class NavigationRequestMapper {
 
     //метод-заглушка
-    public RouteDtoForBalya toRouteDtoForBalya(NavigationRequest navigationRequest, Instant finishDate,
-                                               Ship icebreaker) {
-        return new RouteDtoForBalya(
+    public RouteSegmentDto toRouteSegmentDto(NavigationRequest navigationRequest, Instant finishDate,
+                                             Ship icebreaker) {
+        return new RouteSegmentDto(
                 1L,
                 instantToLocalDate(navigationRequest.getStartDate()),
                 navigationRequest.getStartPoint().getId(),
@@ -28,18 +28,18 @@ public class NavigationRequestMapper {
                 navigationRequest.getFinishPoint().getId(),
                 navigationRequest.getFinishPoint().getName(),
                 icebreaker.getName(),
-                icebreaker.getIceClass().getDescription() + ", " + icebreaker.getSpeed() + " узлов");
+                getShipClassDescription(icebreaker));
 
     }
 
-    public NavigationRequestDtoForBalya toNavigationRequestDtoForBalya(NavigationRequest navigationRequest) {
+    public NavigationRequestPendingDto toNavigationRequestPendingDto(NavigationRequest navigationRequest) {
         Ship ship = navigationRequest.getShip();
-        return new NavigationRequestDtoForBalya(
+        return new NavigationRequestPendingDto(
                 navigationRequest.getId(),
                 navigationRequest.getStatus(),
                 ship.getId(),
                 ship.getName(),
-                ship.getIceClass().getDescription() + ", " + ship.getSpeed() + " узлов",
+                getShipClassDescription(ship),
                 instantToLocalDate(navigationRequest.getStartDate()),
                 navigationRequest.getStartPoint().getId(),
                 navigationRequest.getStartPoint().getName(),
@@ -49,16 +49,20 @@ public class NavigationRequestMapper {
 
     public NavigationRequestWithRouteDto toNavigationRequestWithRouteDto(NavigationRequest navigationRequest,
                                                                          boolean convoy,
-                                                                         List<RouteDtoForBalya> routes) {
+                                                                         List<RouteSegmentDto> routes) {
         Ship ship = navigationRequest.getShip();
         return new NavigationRequestWithRouteDto(
                 navigationRequest.getId(),
                 ship.getId(),
                 ship.getName(),
-                ship.getIceClass().getDescription() + ", " + ship.getSpeed() + " узлов",
+                getShipClassDescription(ship),
                 convoy,
                 routes
         );
+    }
+
+    private String getShipClassDescription(Ship ship) {
+        return "%s, %s узлов".formatted(ship.getIceClass().getShortDescription(), ship.getSpeed());
     }
 
     public NavigationRequestDto toNavigationRequestDto(NavigationRequest navigationRequest) {

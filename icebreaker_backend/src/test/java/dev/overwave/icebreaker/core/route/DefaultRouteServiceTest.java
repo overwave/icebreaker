@@ -38,7 +38,7 @@ public class DefaultRouteServiceTest {
         Graph graph = SerializationUtils.readWeightedGraph("data/graph.lz4");
         List<VelocityInterval> intervals = graph.getFirstVelocities().stream()
                 .map(ContinuousVelocity::interval)
-                .map(o -> new VelocityInterval(o.instant(), o.instant().plus(o.duration())))
+                .map(interval -> new VelocityInterval(interval.instant(), interval.instant().plus(interval.duration())))
                 .toList();
         velocityIntervalRepository.saveAll(intervals);
         navigationPointService.resetNavigationPoints(FileUtils.fromClassPath("/ГрафДанные.xlsx"));
