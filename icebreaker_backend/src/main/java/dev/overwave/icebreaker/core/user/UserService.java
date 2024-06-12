@@ -1,6 +1,7 @@
 package dev.overwave.icebreaker.core.user;
 
 import dev.overwave.icebreaker.api.exception.UserExistsException;
+import dev.overwave.icebreaker.api.user.RegisterUserRequestDto;
 import dev.overwave.icebreaker.api.user.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,15 +21,15 @@ public class UserService implements UserDetailsService {
         return new UserDetailsDto(user.getLogin(), user.getPassword(), user.getRole());
     }
 
-    public void registerUser(String login, String password) {
-        if (userRepository.findByLogin(login).isPresent()) {
-            throw new UserExistsException(login);
+    public void registerUser(RegisterUserRequestDto requestDto) {
+        if (userRepository.findByLogin(requestDto.login()).isPresent()) {
+            throw new UserExistsException(requestDto.login());
         }
         userRepository.save(User.builder()
-                .login(login)
-                .password(passwordEncoder.encode(password))
+                .login(requestDto.login())
+                .password(passwordEncoder.encode(requestDto.password()))
                 .name("Anonymous")
-                .role(UserRole.CAPTAIN)
+                .role(requestDto.role())
                 .build());
     }
 
