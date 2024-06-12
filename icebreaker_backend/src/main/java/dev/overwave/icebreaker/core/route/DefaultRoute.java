@@ -34,12 +34,12 @@ public class DefaultRoute extends LongId {
     private VelocityInterval velocityInterval;
 
     @Enumerated(EnumType.STRING)
-    private IceClassGroup iceGroup;
+    private IceClassGroup iceClassGroup;
 
     @Enumerated(EnumType.STRING)
     private MovementType movementType;
 
-    private long travelTime;
+    private long travelTimeMinutes;
 
     private float distance;
 

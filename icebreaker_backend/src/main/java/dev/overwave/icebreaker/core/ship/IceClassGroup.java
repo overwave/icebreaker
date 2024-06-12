@@ -53,9 +53,9 @@ public enum IceClassGroup {
             return Map.entry(characteristics.getKey(), integralVelocity * characteristics.getValue());
         } else {
             if (characteristics.getKey() == MovementType.FOLLOWING && movementType == MovementType.INDEPENDENT) {
-                return Map.entry(MovementType.FORBIDDEN, speed * 0);
+                return Map.entry(MovementType.FORBIDDEN, 0F);
             } else if (characteristics.getKey() == MovementType.INDEPENDENT && movementType == MovementType.FOLLOWING) {
-                return Map.entry(characteristics.getKey(), speed * 1);
+                return Map.entry(characteristics.getKey(), speed);
             }
             return Map.entry(characteristics.getKey(), speed * characteristics.getValue());
         }
