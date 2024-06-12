@@ -3,12 +3,14 @@ package dev.overwave.icebreaker.core.route;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.overwave.icebreaker.api.navigation.NavigationPointDto;
 import dev.overwave.icebreaker.configuration.FunctionalTest;
+import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
 import dev.overwave.icebreaker.core.geospatial.SpatialVelocity;
 import dev.overwave.icebreaker.core.geospatial.SpatialVelocityFactory;
 import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.GraphFactory;
+import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
 import dev.overwave.icebreaker.core.ship.IceClass;
@@ -49,14 +51,17 @@ class RouterTest {
         Point from = pointsByName.get("Карские ворота");
         Point to = pointsByName.get("Мыс Желания");
 
-        Route route = Router.createRoute(from, to, Instant.now(), graph,
-                new Ship("Плот", IceClass.ICE_2, 16, false, null, null)).orElseThrow();
+        Map<Point, Node> pointNodeMap = Router.findClosestNodes(graph, from, to);
+        Route route = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(), graph,
+                new Ship("Плот", IceClass.ICE_2, 16, false, null, null),
+                MovementType.FOLLOWING, 0L).orElseThrow();
         printRoute(route, "route_novaya_zemlya.json");
 
         from = pointsByName.get("Дудинка");
         to = pointsByName.get("Архангельск");
-        Route route2 = Router.createRoute(from, to, Instant.now(), graph,
-                new Ship("Кобаблище", IceClass.ARC_7, 13, false, null, null)).orElseThrow();
+        Route route2 = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(), graph,
+                new Ship("Кобаблище", IceClass.ARC_7, 13, false, null, null),
+                MovementType.FOLLOWING, 0L).orElseThrow();
         printRoute(route2, "route_dudinka.json");
 
         Point from2 = new Point(69.5F, 33.75F);
@@ -64,7 +69,9 @@ class RouterTest {
         Instant startDate = Instant.parse("2020-04-05T00:00:00Z");
         Ship ship = new Ship("Ship", IceClass.ARC_5, 16F, false, null, null);
 
-        Optional<Route> route3 = Router.createRoute(from2, to2, startDate, graph, ship);
+        Optional<Route> route3 = Router.createRoute(pointNodeMap.get(from2), pointNodeMap.get(to2), startDate, graph,
+                ship,
+                MovementType.FOLLOWING, 0L);
         assertThat(route3).isPresent();
         assertThat(route3.get().interval().instant()).isBefore(Instant.parse("2020-04-10T00:00:00Z"));
 

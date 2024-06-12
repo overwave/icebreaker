@@ -40,7 +40,6 @@ public class NavigationRequestController {
     }
 
     @PutMapping("/route-requests")
-    //TODO поправить дату подачи - LocalDate
     public void addNavigationRequest(@RequestBody NavigationRequestDto requestDto) {
         navigationRequestService.saveNavigationRequest(requestDto);
     }

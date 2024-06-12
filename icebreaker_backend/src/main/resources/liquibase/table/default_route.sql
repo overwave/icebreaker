@@ -21,4 +21,12 @@ CREATE INDEX IF NOT EXISTS default_route_velocity_interval_id_idx ON default_rou
 ALTER TABLE default_route
     ALTER COLUMN nodes TYPE TEXT;
 
+--changeset author:lizunya_default_route_alter_column_ice_class
+ALTER TABLE default_route
+    RENAME COLUMN ice_class TO ice_group;
+
+--changeset author:lizunya_default_route_add_column_movement_type
+ALTER TABLE default_route
+ADD COLUMN IF NOT EXISTS movement_type TEXT NOT NULL DEFAULT 'FORBIDDEN';
+
 
