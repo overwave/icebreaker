@@ -50,8 +50,11 @@ public class DefaultRouteService {
         Map<IceClassGroup, IceClass> iceClassByGroup = getIceClassByGroup();
 
         for (NavigationRoute edge : edges) {
+            nextInterval:
             for (VelocityInterval interval : intervals) {
-                for (IceClassGroup iceClassGroup : IceClassGroup.values()) {
+                // группы должны быть в порядке убывания по проходимости
+                List<IceClassGroup> iceClassGroupsDescending = Arrays.asList(IceClassGroup.values()).reversed();
+                for (IceClassGroup iceClassGroup : iceClassGroupsDescending) {
                     Ship ship = new Ship("ship", iceClassByGroup.get(iceClassGroup), REFERENCE_SPEED,
                             iceClassGroup.isIcebreaker(), null, null);
                     Point from = edge.getPoint1().getPoint();
@@ -62,7 +65,7 @@ public class DefaultRouteService {
                             interval.getStartDate(),
                             ship,
                             MovementType.FOLLOWING,
-                            Duration.ZERO);
+                            Duration.ofDays(5));
                     if (routeFollowingO.isEmpty()) {
                         DefaultRoute defaultRouteImpossible = DefaultRoute.builder()
                                 .edge(edge)
@@ -75,13 +78,14 @@ public class DefaultRouteService {
                                 .movementType(MovementType.FORBIDDEN)
                                 .build();
                         defaultRouteRepository.save(defaultRouteImpossible);
-                        System.out.printf(
-                                "Route from %s to %s at %s by %s impossible%n", edge.getPoint1().getName(),
+                        System.err.printf(
+                                "Route from %s to %s at %s by %s impossible, skipping to next interval%n",
+                                edge.getPoint1().getName(),
                                 edge.getPoint2().getName(),
                                 interval.getStartDate().atOffset(ZoneOffset.UTC).toLocalDate(),
                                 iceClassGroup.name()
                         );
-                        continue;
+                        continue nextInterval;
                     }
                     Route routeFollowing = routeFollowingO.get();
                     Duration travelTimeFollowing = routeFollowing.interval().duration();
