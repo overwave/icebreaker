@@ -1,5 +1,6 @@
 package dev.overwave.icebreaker.core.user;
 
+import dev.overwave.icebreaker.api.user.RegisterUserRequestDto;
 import dev.overwave.icebreaker.api.user.UserDto;
 import dev.overwave.icebreaker.configuration.FunctionalTest;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,7 @@ class UserServiceTest {
 
     @Test
     void loadUserByUsername() {
-        userService.registerUser("user", "password");
+        userService.registerUser(new RegisterUserRequestDto("user", "password", UserRole.CAPTAIN));
         UserDetails userDetails = userService.loadUserByUsername("user");
         assertThat(userDetails.getUsername()).isEqualTo("user");
         assertThat(userDetails.getAuthorities()).hasSize(1);
