@@ -48,7 +48,7 @@ public class Router {
                 int currentTravelDuration = routeSegments.get(current).durationMinutes();
                 // если текущая длительность сформированного пути в 2 раза больше, чем полный путь под проводкой
                 // ледокола - значит такой путь нам уже не подходит
-                if (movementType == MovementType.INDEPENDENT && currentTravelDuration > referenceTime.toMinutes() * 2) {
+                if (!referenceTime.isZero() && currentTravelDuration > referenceTime.toMinutes() * 2) {
                     return Optional.empty();
                 }
                 Instant currentTime = startDate.plus(currentTravelDuration, ChronoUnit.MINUTES);
