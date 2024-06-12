@@ -2,13 +2,13 @@ package dev.overwave.icebreaker.api.navigation;
 
 import dev.overwave.icebreaker.core.navigation.RequestStatus;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
-public record NavigationRequestDto (
+public record NavigationRequestDto(
         long shipId,
         long startPointId,
         long finishPointId,
-        Instant startDate,
+        LocalDate startDate,
         RequestStatus status
 ) {
 }
