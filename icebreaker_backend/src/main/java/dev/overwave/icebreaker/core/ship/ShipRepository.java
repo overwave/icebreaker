@@ -14,4 +14,6 @@ public interface ShipRepository extends JpaRepository<Ship, Long> {
     }
 
     List<Ship> findAllByUserId(Long id);
+
+    List<Ship> findAllByIcebreaker(boolean icebreaker);
 }
