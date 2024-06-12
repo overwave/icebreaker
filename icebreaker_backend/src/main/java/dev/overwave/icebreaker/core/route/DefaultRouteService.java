@@ -44,7 +44,7 @@ public class DefaultRouteService {
         Point[] points = navigationPointRepository.findAll().stream()
                 .map(NavigationPoint::getPoint)
                 .toArray(Point[]::new);
-        Map<Point, Node> pointNodeMap = Router.findClosestNodes(graph, points);
+        Map<Point, Node> pointNodeMap = Router.findClosestNodesFast(graph, points);
         Map<IceClassGroup, IceClass> iceClassByGroup = getIceClassByGroup();
 
         for (NavigationRoute edge : edges) {
@@ -78,17 +78,6 @@ public class DefaultRouteService {
                     } else {
                         Route routeFollowing = routeOFollowing.get();
                         long travelTimeFollowing = routeFollowing.interval().duration().toMinutes();
-                        DefaultRoute defaultRouteFollowing = DefaultRoute.builder()
-                                .edge(edge)
-                                .iceGroup(iceGroup)
-                                .velocityInterval(interval)
-                                .travelTime(travelTimeFollowing)
-                                .distance(routeFollowing.distance())
-                                .possible(true)
-                                .nodes(serializeNodes(routeFollowing.nodes()))
-                                .movementType(MovementType.FOLLOWING)
-                                .build();
-                        defaultRouteRepository.save(defaultRouteFollowing);
 
                         Optional<Route> routeOIndependent = Router.createRoute(
                                 pointNodeMap.get(from),
@@ -98,7 +87,7 @@ public class DefaultRouteService {
                                 ship,
                                 MovementType.INDEPENDENT,
                                 travelTimeFollowing);
-                        if(routeOIndependent.isPresent()) {
+                        if (routeOIndependent.isPresent()) {
                             Route routeIndependent = routeOIndependent.get();
                             long travelTimeIndependent = routeIndependent.interval().duration().toMinutes();
                             DefaultRoute defaultRouteIndependent = DefaultRoute.builder()
@@ -112,10 +101,19 @@ public class DefaultRouteService {
                                     .movementType(MovementType.INDEPENDENT)
                                     .build();
                             defaultRouteRepository.save(defaultRouteIndependent);
+                        } else {
+                            DefaultRoute defaultRouteFollowing = DefaultRoute.builder()
+                                    .edge(edge)
+                                    .iceGroup(iceGroup)
+                                    .velocityInterval(interval)
+                                    .travelTime(travelTimeFollowing)
+                                    .distance(routeFollowing.distance())
+                                    .possible(true)
+                                    .nodes(serializeNodes(routeFollowing.nodes()))
+                                    .movementType(MovementType.FOLLOWING)
+                                    .build();
+                            defaultRouteRepository.save(defaultRouteFollowing);
                         }
-                    }
-                    if (true) {
-                        return;
                     }
                 }
             }
