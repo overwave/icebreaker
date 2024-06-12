@@ -16,3 +16,9 @@ CREATE TABLE IF NOT EXISTS default_route
 --changeset author:lizunya_default_route_create_index
 CREATE INDEX IF NOT EXISTS default_route_navigation_route_id_idx ON default_route (navigation_route_id);
 CREATE INDEX IF NOT EXISTS default_route_velocity_interval_id_idx ON default_route (velocity_interval_id);
+
+--changeset author:lizunya_default_route_alter_column_nodes
+ALTER TABLE default_route
+    ALTER COLUMN nodes TYPE TEXT;
+
+
