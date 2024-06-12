@@ -66,7 +66,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  background: #2be080;
+  background: #4480F3;
   border-radius: 50px;
 }
 
@@ -88,6 +88,6 @@
 
 .preloader__round::before {
   z-index: 10;
-  background: #2be080;
+  background: #4480F3;
   animation: preloader-inside-red 1s ease-in-out infinite;
 }

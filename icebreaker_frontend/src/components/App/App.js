@@ -70,6 +70,7 @@ function App() {
       .authorize({ login, password })
       .then((res) => {
         if (res.result === "SUCCESS") {
+          window.location.reload();
           localStorage.setItem("loggedIn", true);
           setLoggedIn(true);
         }
@@ -106,7 +107,6 @@ function App() {
     mainApi
       .logout()
       .then((res) => {
-        console.log(res);
         localStorage.clear();
         setCurrentUser({
           role: "",
@@ -178,6 +178,15 @@ function App() {
     
   }
 
+  function changeOption(index, name, setSelected) {
+      if (index === 0) {
+          localStorage.removeItem(name);
+      } else {
+          localStorage.setItem(name, JSON.stringify(index));
+      }
+      setSelected(index);
+  }
+
   return (
     <>
       <CurrentUserContext.Provider value={{ currentUser }}>
@@ -202,6 +211,7 @@ function App() {
                   onSubmit={handleRegister}
                   isError={isError}
                   errorMessage={errorMessage}
+                  changeOption={changeOption}
                 />
               </Route>
 
