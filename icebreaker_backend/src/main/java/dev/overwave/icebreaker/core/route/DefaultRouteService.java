@@ -20,6 +20,7 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,6 @@ public class DefaultRouteService {
         for (NavigationRoute edge : edges) {
             for (VelocityInterval interval : intervals) {
                 for (IceClassGroup iceClassGroup : IceClassGroup.values()) {
-
                     Ship ship = new Ship("ship", iceClassByGroup.get(iceClassGroup), REFERENCE_SPEED,
                             iceClassGroup.isIcebreaker(), null, null);
                     Point from = edge.getPoint1().getPoint();
@@ -75,6 +75,12 @@ public class DefaultRouteService {
                                 .movementType(MovementType.FORBIDDEN)
                                 .build();
                         defaultRouteRepository.save(defaultRouteImpossible);
+                        System.out.printf(
+                                "Route from %s to %s at %s by %s impossible%n", edge.getPoint1().getName(),
+                                edge.getPoint2().getName(),
+                                interval.getStartDate().atOffset(ZoneOffset.UTC).toLocalDate(),
+                                iceClassGroup.name()
+                        );
                         continue;
                     }
                     Route routeFollowing = routeFollowingO.get();
@@ -101,6 +107,12 @@ public class DefaultRouteService {
                                 .movementType(MovementType.INDEPENDENT)
                                 .build();
                         defaultRouteRepository.save(defaultRouteIndependent);
+                        System.out.printf(
+                                "Route from %s to %s at %s by %s independent%n", edge.getPoint1().getName(),
+                                edge.getPoint2().getName(),
+                                interval.getStartDate().atOffset(ZoneOffset.UTC).toLocalDate(),
+                                iceClassGroup.name()
+                        );
                     } else {
                         DefaultRoute defaultRouteFollowing = DefaultRoute.builder()
                                 .edge(edge)
@@ -113,6 +125,12 @@ public class DefaultRouteService {
                                 .movementType(MovementType.FOLLOWING)
                                 .build();
                         defaultRouteRepository.save(defaultRouteFollowing);
+                        System.out.printf(
+                                "Route from %s to %s at %s by %s following%n", edge.getPoint1().getName(),
+                                edge.getPoint2().getName(),
+                                interval.getStartDate().atOffset(ZoneOffset.UTC).toLocalDate(),
+                                iceClassGroup.name()
+                        );
                     }
                 }
             }
