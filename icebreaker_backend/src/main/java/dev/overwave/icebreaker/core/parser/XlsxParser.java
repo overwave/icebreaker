@@ -75,6 +75,9 @@ public class XlsxParser {
             int externalId = (int) row.getCell(0).getNumericCellValue();
             float lat = (float) row.getCell(1).getNumericCellValue();
             float lon = (float) row.getCell(2).getNumericCellValue();
+            if (lon < 0) {
+                lon += 360;
+            }
             String name = row.getCell(3).getStringCellValue();
             points.add(new NavigationPoint(externalId, name, lat, lon, new ArrayList<>(), new ArrayList<>()));
         }

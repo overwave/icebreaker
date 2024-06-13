@@ -20,7 +20,9 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +81,8 @@ public class DefaultRouteService {
                                 .build();
                         defaultRouteRepository.save(defaultRouteImpossible);
                         System.err.printf(
-                                "Route from %s to %s at %s by %s impossible, skipping to next interval%n",
+                                "%s Route from %s to %s at %s by %s impossible, skipping to next interval%n",
+                                Instant.now().truncatedTo(ChronoUnit.SECONDS),
                                 edge.getPoint1().getName(),
                                 edge.getPoint2().getName(),
                                 interval.getStartDate().atOffset(ZoneOffset.UTC).toLocalDate(),
@@ -112,7 +115,9 @@ public class DefaultRouteService {
                                 .build();
                         defaultRouteRepository.save(defaultRouteIndependent);
                         System.out.printf(
-                                "Route from %s to %s at %s by %s independent%n", edge.getPoint1().getName(),
+                                "%s Route from %s to %s at %s by %s independent%n",
+                                Instant.now().truncatedTo(ChronoUnit.SECONDS),
+                                edge.getPoint1().getName(),
                                 edge.getPoint2().getName(),
                                 interval.getStartDate().atOffset(ZoneOffset.UTC).toLocalDate(),
                                 iceClassGroup.name()
@@ -130,7 +135,9 @@ public class DefaultRouteService {
                                 .build();
                         defaultRouteRepository.save(defaultRouteFollowing);
                         System.out.printf(
-                                "Route from %s to %s at %s by %s following%n", edge.getPoint1().getName(),
+                                "%s Route from %s to %s at %s by %s following%n",
+                                Instant.now().truncatedTo(ChronoUnit.SECONDS),
+                                edge.getPoint1().getName(),
                                 edge.getPoint2().getName(),
                                 interval.getStartDate().atOffset(ZoneOffset.UTC).toLocalDate(),
                                 iceClassGroup.name()
