@@ -5,6 +5,7 @@ import dev.overwave.icebreaker.api.navigation.NavigationPointDto;
 import dev.overwave.icebreaker.configuration.FunctionalTest;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
+import dev.overwave.icebreaker.core.geospatial.VelocityIntervalService;
 import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
@@ -33,7 +34,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RequiredArgsConstructor
 class RouterTest {
     private final NavigationPointService navigationPointService;
+    private final VelocityIntervalService velocityIntervalService;
     private final ObjectMapper objectMapper;
+
+    @Test
+    @SneakyThrows
+    void buildRoute2() {
+        navigationPointService.resetNavigationPoints(FileUtils.fromClassPath("/ГрафДанные.xlsx"));
+        //velocityIntervalService.resetIntegralVelocities(FileUtils.fromClassPath("/IntegrVelocity.xlsx"));
+        Graph graph = SerializationUtils.readWeightedGraph("data/graph.lz4");
+        Map<String, Point> pointsByName = navigationPointService.getNavigationPoints().stream()
+                .collect(Collectors.toMap(NavigationPointDto::name, NavigationPointDto::point));
+        Point from = pointsByName.get("Карские ворота");
+        Point to = pointsByName.get("остров Врангеля");
+        Map<Point, Node> pointNodeMap = Router.findClosestNodes(graph, from, to);
+
+        Optional<Route> route = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(),
+                new Ship("Плот", IceClass.ARC_7, 18, false, null, null),
+                MovementType.FOLLOWING, Duration.ZERO);
+        assertThat(route).isPresent();
+        printRoute(route.get(), "route_vrangel.json");
+        printRoute(route.get().normalizedPoints(), "normalized_route_vrangel.json");
+    }
 
     @Test
     @SneakyThrows
@@ -80,9 +102,16 @@ class RouterTest {
     }
 
 
-
     private void printRoute(Route route, String pathname) throws IOException {
         List<List<Float>> points = routeToPoints(route);
+        Files.writeString(new File(pathname).toPath(), objectMapper.writeValueAsString(points),
+                StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+    }
+
+    private void printRoute(List<Point> normalizedPoints, String pathname) throws IOException {
+        List<List<Float>> points = normalizedPoints.stream()
+                .map(point -> List.of(point.lat(), point.lon()))
+                .toList();
         Files.writeString(new File(pathname).toPath(), objectMapper.writeValueAsString(points),
                 StandardOpenOption.WRITE, StandardOpenOption.CREATE);
     }

@@ -11,10 +11,15 @@ import dev.overwave.icebreaker.core.graph.SparseList;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.ship.Ship;
 import lombok.experimental.UtilityClass;
+import net.sf.geographiclib.Geodesic;
+import net.sf.geographiclib.GeodesicData;
+import net.sf.geographiclib.GeodesicLine;
+import net.sf.geographiclib.GeodesicMask;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,6 +35,7 @@ import java.util.PriorityQueue;
 public class Router {
 
     public static final float KNOTS_TO_METER_PER_MINUTES = 1852F / 60F;
+    public static final int ONE_HOUR_IN_MIN = 60;
 
     public Optional<Route> createRoute(Node from, Node to, Instant startDate, Ship ship,
                                        MovementType movementType, Duration referenceTime) {
@@ -42,7 +48,13 @@ public class Router {
         while (!queue.isEmpty()) {
             Node current = queue.poll().getKey();
             if (current.coordinates().equals(to.coordinates())) {
-                return Optional.of(buildRoute(startDate, routeSegments, current));
+                Route route = buildRoute(startDate, routeSegments, current);
+                Route normalizedRoute = new Route(
+                        route.interval(),
+                        route.nodes(),
+                        route.distance(),
+                        normalizeRoutePoints(route.nodes(), routeSegments));
+                return Optional.of(normalizedRoute);
             }
             for (Edge nextEdge : current.edges()) {
                 int currentTravelDuration = routeSegments.get(current).durationMinutes();
@@ -73,6 +85,38 @@ public class Router {
         return Optional.empty();
     }
 
+    private static List<Point> normalizeRoutePoints(List<Node> nodes, Map<Node, RouteSegment> routeSegments) {
+        List<Point> normalizedPoints = new ArrayList<>();
+        int durationToCursor = 0;
+        for (int i = 0; i < nodes.size(); i++) {
+            Node currentNode = nodes.get(i);
+            int currentDuration = routeSegments.get(currentNode).durationMinutes();
+            int durationToCursorWithInterval = durationToCursor + ONE_HOUR_IN_MIN;
+            if (currentDuration < durationToCursorWithInterval) {
+                continue;
+            } else if (currentDuration == durationToCursorWithInterval) {
+                normalizedPoints.add(currentNode.coordinates());
+            } else {
+                Node prevNode = nodes.get(i - 1);
+                int durationBetweenCurrentAndPrev = currentDuration - routeSegments.get(prevNode).durationMinutes();
+                int partOfSegment = currentDuration - durationToCursorWithInterval;
+                Point point = findPointInPartOfSegment(currentNode.coordinates(), prevNode.coordinates(),
+                        partOfSegment / (float) durationBetweenCurrentAndPrev);
+                normalizedPoints.add(point);
+            }
+            durationToCursor = durationToCursorWithInterval;
+        }
+        return normalizedPoints;
+    }
+
+    private static Point findPointInPartOfSegment(Point point1, Point point2, float ratio) {
+        GeodesicLine line = Geodesic.WGS84.InverseLine(point1.lat(), point1.lon(), point2.lat(), point2.lon(),
+                GeodesicMask.DISTANCE_IN | GeodesicMask.LATITUDE | GeodesicMask.LONGITUDE);
+        GeodesicData g = line.ArcPosition(line.Arc() * ratio, GeodesicMask.LATITUDE | GeodesicMask.LONGITUDE);
+        return new Point((float) g.lat2, (float) g.lon2);
+
+    }
+
     private static float getCurrentVelocity(Instant currentTime, List<ContinuousVelocity> velocities) {
         for (ContinuousVelocity continuousVelocity : velocities) {
             if (continuousVelocity.interval().contains(currentTime)) {
@@ -100,7 +144,7 @@ public class Router {
             route.add(cursor);
             cursor = previous;
         }
-        return new Route(new Interval(startDate, Duration.ofMinutes(timeInMinutes)), route.reversed(), distance);
+        return new Route(new Interval(startDate, Duration.ofMinutes(timeInMinutes)), route.reversed(), distance, null);
     }
 
     private static Entry<MovementType, Float> getIceCharacteristics(Ship ship, float integralVelocity,
