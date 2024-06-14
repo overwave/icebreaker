@@ -26,7 +26,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -96,6 +98,52 @@ public class ScheduleService {
                 .forEach(ships::add);
 
         predictFullRoutes(ships, convoyRequests, context);
+        assignIcebreakers(ships, convoyRequests, context);
+
+        System.out.println(convoyRequests);
+    }
+
+    private void assignIcebreakers(List<ScheduledShip> ships, List<ConvoyRequest> convoyRequests,
+                                   MetaRouteContext context) {
+        List<ConvoyRequest> closestConvoyRequests = convoyRequests.stream()
+                .collect(Collectors.toMap(cr -> cr.getShip().getShipId(), cr -> cr, this::getEarlierRequest))
+                .values().stream()
+                .sorted(Comparator.comparing(cr -> cr.getRouteSegment().interval().start()))
+                .toList();
+        List<ScheduledShip> icebreakers = ships.stream().filter(ScheduledShip::isIcebreaker).toList();
+
+        for (ConvoyRequest convoyRequest : closestConvoyRequests) {
+            NavigationPointStatic target = convoyRequest.getRouteSegment().from();
+
+            for (ScheduledShip icebreaker : icebreakers) {
+                ScheduledShip virtualIcebreaker = ScheduledShip.builder()
+                        .shipId(icebreaker.getShipId())
+                        .currentNavigationPointId(icebreaker.getNextNavigationPointId())
+                        .status(ScheduleStatus.FREE)
+                        .icebreaker(true)
+                        .finishNavigationPointId(icebreaker.getFinishNavigationPointId())
+                        .actionEndEta(icebreaker.getActionEndEta())
+                        .build();
+                Duration etaToFinish = estimateEtaToFinish(context, virtualIcebreaker);
+                virtualIcebreaker
+                        .setCurrentNavigationPointId(icebreaker.getFinishNavigationPointId())
+                        .setFinishNavigationPointId(target.id())
+                        .setActionEndEta(icebreaker.getActionEndEta().plus(etaToFinish));
+                Duration etaToFinishSecond = estimateEtaToFinish(context, virtualIcebreaker);
+                log.info("IBR {} ETA is {}", context.ships().get(icebreaker.getShipId()).name(),
+                        asLDT(icebreaker.getActionEndEta().plus(etaToFinish).plus(etaToFinishSecond)));
+            }
+        }
+    }
+
+    private Duration estimateEtaToFinish(MetaRouteContext context, ScheduledShip virtualIcebreaker) {
+        List<RoutePredictionSegment> route = predictRoute(virtualIcebreaker, context);
+        return route.stream().map(r -> r.interval().duration()).reduce(Duration::plus).orElse(Duration.ZERO);
+    }
+
+    private ConvoyRequest getEarlierRequest(ConvoyRequest cr1, ConvoyRequest cr2) {
+        return cr1.getRouteSegment().interval().start().compareTo(cr2.getRouteSegment().interval().start()) < 0 ?
+                cr1 : cr2;
     }
 
     private MetaRouteContext createContext() {
@@ -130,16 +178,13 @@ public class ScheduleService {
         List<ScheduledShip> freeShips = ships.stream()
                 .filter(s -> s.getStatus() == ScheduleStatus.FREE && !s.isIcebreaker())
                 .toList();
-        List<ScheduledShip> icebreakers = ships.stream().filter(ScheduledShip::isIcebreaker).toList();
-
         for (ScheduledShip freeShip : freeShips) {
             log.info("_____________________________________________________");
             log.info("Predicting route for " + context.ships().get(freeShip.getShipId()).name());
             List<RoutePredictionSegment> prediction = predictRoute(freeShip, context);
             for (RoutePredictionSegment segment : prediction) {
                 log.info("From {} to {}, [{} -> {}]", segment.from().name(), segment.to().name(),
-                        segment.interval().start().atOffset(ZoneOffset.UTC).toLocalDateTime(),
-                        segment.interval().end().atOffset(ZoneOffset.UTC).toLocalDateTime());
+                        asLDT(segment.interval().start()), asLDT(segment.interval().end()));
             }
             if (prediction.isEmpty()) {
                 freeShip.setStatus(ScheduleStatus.STUCK);
@@ -153,15 +198,14 @@ public class ScheduleService {
 
             for (RoutePredictionSegment route : prediction) {
                 if (route.convoy()) {
-                    ScheduledShip icebreaker = findIcebreaker(icebreakers);
-                    convoyRequests.add(new ConvoyRequest(freeShip, icebreaker, route));
+                    convoyRequests.add(new ConvoyRequest(freeShip, null, route));
                 }
             }
         }
     }
 
-    private ScheduledShip findIcebreaker(List<ScheduledShip> icebreakers) {
-        return null;
+    private static LocalDateTime asLDT(Instant instant) {
+        return instant.atOffset(ZoneOffset.UTC).toLocalDateTime();
     }
 
     private List<RoutePredictionSegment> predictRoute(ScheduledShip scheduledShip, MetaRouteContext context) {
