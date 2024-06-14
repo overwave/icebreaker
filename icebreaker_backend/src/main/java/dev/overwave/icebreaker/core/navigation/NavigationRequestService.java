@@ -1,7 +1,7 @@
 package dev.overwave.icebreaker.core.navigation;
 
-import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestPendingDto;
+import dev.overwave.icebreaker.api.navigation.NavigationRequestToSaveDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestWithRouteDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestsDtoWithRoute;
 import dev.overwave.icebreaker.api.navigation.RouteSegmentDto;
@@ -27,7 +27,7 @@ public class NavigationRequestService {
     private final NavigationPointRepository navigationPointRepository;
     private final UserRepository userRepository;
 
-    public void saveNavigationRequest(NavigationRequestDto requestDto) {
+    public void saveNavigationRequest(NavigationRequestToSaveDto requestDto) {
         Ship ship = shipRepository.findByIdOrThrow(requestDto.shipId());
         NavigationPoint startPoint = navigationPointRepository.findByIdOrThrow(requestDto.startPointId());
         NavigationPoint finishPoint = navigationPointRepository.findByIdOrThrow(requestDto.finishPointId());

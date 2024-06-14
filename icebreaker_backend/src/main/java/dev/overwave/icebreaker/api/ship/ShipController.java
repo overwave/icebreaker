@@ -25,8 +25,9 @@ public class ShipController {
 
     @SneakyThrows
     @PutMapping("/ships")
-    public ShipDto createShip(@RequestBody ShipCreateRequest ship, Principal principal) {
-        return shipService.createShip(ship, principal.getName());
+    public ShipListDto createShip(@RequestBody ShipCreateRequest ship, Principal principal) {
+        shipService.createShip(ship, principal.getName());
+        return new ShipListDto(shipService.getShips(principal.getName()));
     }
 
     @GetMapping("/ice-classes")

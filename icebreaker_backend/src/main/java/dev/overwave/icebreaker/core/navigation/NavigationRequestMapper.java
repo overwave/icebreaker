@@ -1,9 +1,10 @@
 package dev.overwave.icebreaker.core.navigation;
 
+import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestPendingDto;
+import dev.overwave.icebreaker.api.navigation.NavigationRequestToSaveDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestWithRouteDto;
 import dev.overwave.icebreaker.api.navigation.RouteSegmentDto;
-import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import dev.overwave.icebreaker.core.ship.Ship;
 import org.springframework.stereotype.Component;
 
@@ -77,7 +78,7 @@ public class NavigationRequestMapper {
         return LocalDate.ofInstant(instant, ZoneOffset.UTC);
     }
 
-    public NavigationRequest toNavigationRequest(NavigationRequestDto dto, Ship ship, NavigationPoint startPoint,
+    public NavigationRequest toNavigationRequest(NavigationRequestToSaveDto dto, Ship ship, NavigationPoint startPoint,
                                                  NavigationPoint finishPoint, RequestStatus status) {
         return new NavigationRequest(ship,
                 startPoint,

@@ -5,9 +5,9 @@ import dev.overwave.icebreaker.core.geospatial.ContinuousVelocity;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
-import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.navigation.NavigationPoint;
 import dev.overwave.icebreaker.core.navigation.NavigationRoute;
+import dev.overwave.icebreaker.core.util.GeometryUtils;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.openxml4j.opc.OPCPackage;
@@ -90,7 +90,7 @@ public class XlsxParser {
             XSSFRow row = edgesSheet.getRow(rowNum);
             NavigationPoint startPoint = getPointById(points, row.getCell(1));
             NavigationPoint endPoint = getPointById(points, row.getCell(2));
-            NavigationRoute route = new NavigationRoute(startPoint, endPoint, GraphFactory.getDistance(
+            NavigationRoute route = new NavigationRoute(startPoint, endPoint, GeometryUtils.getDistance(
                     new Point(startPoint.getLat(), startPoint.getLon()),
                     new Point(endPoint.getLat(), endPoint.getLon())
             ));
