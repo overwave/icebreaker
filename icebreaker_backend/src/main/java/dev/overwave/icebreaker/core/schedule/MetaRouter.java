@@ -106,7 +106,7 @@ public class MetaRouter {
             return null;
         }
         for (DefaultRouteStatic defaultRoute : defaultRoutes) {
-            if (!defaultRoute.interval().contains(instant)) {
+            if (!defaultRoute.interval().contains(reducedInstant)) {
                 continue;
             }
             if (defaultRoute.iceClassGroup() != ship.iceClass().getGroup()) {

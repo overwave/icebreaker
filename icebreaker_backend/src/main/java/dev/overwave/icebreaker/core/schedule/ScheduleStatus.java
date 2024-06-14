@@ -6,4 +6,5 @@ public enum ScheduleStatus {
     MOVING,
     WAITING_CONVOY,
     FOLLOWING,
+    STUCK,
 }
