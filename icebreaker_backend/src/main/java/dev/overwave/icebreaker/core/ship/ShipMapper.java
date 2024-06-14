@@ -8,4 +8,14 @@ public class ShipMapper {
     public ShipDto map(Ship ship) {
         return new ShipDto(ship.getId(), ship.getName(), ship.getSpeed(), ship.getIceClass());
     }
+
+    public ShipStatic toShipStatic(Ship ship) {
+        return ShipStatic.builder()
+                .id(ship.getId())
+                .name(ship.getName())
+                .iceClass(ship.getIceClass())
+                .speed(ship.getSpeed())
+                .icebreaker(ship.isIcebreaker())
+                .build();
+    }
 }

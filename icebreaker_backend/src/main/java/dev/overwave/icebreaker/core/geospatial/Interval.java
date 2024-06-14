@@ -6,9 +6,19 @@ import java.time.Instant;
 
 public record Interval(Instant instant, Duration duration) {
 
-    public boolean contains(Instant instant) {
-        Instant start = this.instant;
-        Instant end = start.plus(this.duration);
-        return (start.isBefore(instant) || start.equals(instant)) && end.isAfter(instant);
+    public boolean contains(Instant other) {
+        return (start().isBefore(other) || start().equals(other)) && end().isAfter(other);
+    }
+
+    public Instant start() {
+        return instant;
+    }
+
+    public Instant end() {
+        return instant.plus(duration);
+    }
+
+    public static Interval ofStartEnd(Instant start, Instant end) {
+        return new Interval(start, Duration.between(start, end));
     }
 }

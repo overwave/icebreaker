@@ -2,6 +2,10 @@ server:
   http2:
     enabled: true
   port: '8090'
+  error:
+    include-exception: true
+    include-message: always
+    include-stacktrace: always
   servlet:
     session:
       timeout: 30m

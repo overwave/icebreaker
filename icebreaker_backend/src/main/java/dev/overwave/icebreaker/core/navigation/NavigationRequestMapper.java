@@ -89,4 +89,14 @@ public class NavigationRequestMapper {
     private static Instant localDateToInstant(LocalDate localDate) {
         return localDate.atTime(LocalTime.NOON).toInstant(ZoneOffset.UTC);
     }
+
+    public NavigationRequestStatic toNavigationRequestStatic(NavigationRequest request) {
+        return NavigationRequestStatic.builder()
+                .id(request.getId())
+                .shipId(request.getShip().getId())
+                .startPointId(request.getStartPoint().getId())
+                .finishPointId(request.getFinishPoint().getId())
+                .startDate(request.getStartDate())
+                .build();
+    }
 }

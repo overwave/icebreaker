@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DefaultRouteService {
-    private final static float REFERENCE_SPEED = 20.0F;
+    public final static float REFERENCE_SPEED = 20.0F;
 
     private final NavigationRouteRepository navigationRouteRepository;
     private final DefaultRouteRepository defaultRouteRepository;
