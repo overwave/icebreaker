@@ -141,6 +141,11 @@ public class ScheduleService {
                         segment.interval().start().atOffset(ZoneOffset.UTC).toLocalDateTime(),
                         segment.interval().end().atOffset(ZoneOffset.UTC).toLocalDateTime());
             }
+            if (prediction.isEmpty()) {
+                freeShip.setStatus(ScheduleStatus.STUCK);
+                freeShip.setActionEndEta(Instant.MAX);
+                continue;
+            }
             RoutePredictionSegment firstPoint = prediction.getFirst();
             freeShip.setStatus(firstPoint.convoy() ? ScheduleStatus.WAITING_CONVOY : ScheduleStatus.WAITING);
             freeShip.setNextNavigationPointId(firstPoint.to().id());
@@ -169,18 +174,18 @@ public class ScheduleService {
         Instant startAt = scheduledShip.getActionEndEta();
         List<RoutePredictionSegment> route = List.of();
         while (route.isEmpty()) {
-            log.info("Checking route...");
             route = metaRouter.createRoute(from, to, ship, startAt, context);
             if (!route.isEmpty()) {
                 log.info("Route found!");
                 break;
             }
-            VelocityIntervalStatic interval = getInterval(startAt, context.velocities().values());
-            Instant afterWaiting = interval.interval().instant().plus(interval.interval().duration());
+            Interval interval = getInterval(startAt, context.velocities().values());
+            Instant afterWaiting = interval.end();
             if (afterWaiting.equals(startAt)) {
                 log.info("Exceeded time range!");
                 return List.of();
             }
+            log.info("Skipping to next interval...");
             startAt = afterWaiting;
 
         }
@@ -192,18 +197,19 @@ public class ScheduleService {
         return route;
     }
 
-    private VelocityIntervalStatic getInterval(Instant startAt, Collection<VelocityIntervalStatic> intervals) {
+    private Interval getInterval(Instant startAt, Collection<VelocityIntervalStatic> intervals) {
         SequencedCollection<VelocityIntervalStatic> intervalSequence =
                 (SequencedCollection<VelocityIntervalStatic>) intervals;
         // Раньше первого интервала
         if (startAt.compareTo(intervalSequence.getFirst().interval().start()) <= 0) {
-            return intervalSequence.getFirst();
+            return Interval.ofStartEnd(startAt, intervalSequence.getFirst().interval().start());
         }
         return intervalSequence.stream()
                 .filter(vi -> vi.interval().contains(startAt))
                 .findFirst()
+                .map(VelocityIntervalStatic::interval)
                 // Позже последнего интервала
-                .orElse(intervalSequence.getLast());
+                .orElse(intervalSequence.getLast().interval());
     }
 }
 
