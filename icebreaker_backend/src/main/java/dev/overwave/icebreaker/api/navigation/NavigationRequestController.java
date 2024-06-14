@@ -41,7 +41,7 @@ public class NavigationRequestController {
     }
 
     @PutMapping("/route-requests")
-    public NavigationRequestPendingListDto addNavigationRequest(@RequestBody NavigationRequestDto requestDto, Principal principal) {
+    public NavigationRequestPendingListDto addNavigationRequest(@RequestBody NavigationRequestToSaveDto requestDto, Principal principal) {
         navigationRequestService.saveNavigationRequest(requestDto);
         return new NavigationRequestPendingListDto(navigationRequestService.getNavigationRequestsPending(principal.getName()));
     }

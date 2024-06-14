@@ -6,15 +6,11 @@ import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.graph.Graph;
-import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.graph.SparseList;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.ship.Ship;
+import dev.overwave.icebreaker.core.util.GeometryUtils;
 import lombok.experimental.UtilityClass;
-import net.sf.geographiclib.Geodesic;
-import net.sf.geographiclib.GeodesicData;
-import net.sf.geographiclib.GeodesicLine;
-import net.sf.geographiclib.GeodesicMask;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -35,7 +31,7 @@ import java.util.PriorityQueue;
 public class Router {
 
     public static final float KNOTS_TO_METER_PER_MINUTES = 1852F / 60F;
-    public static final int ONE_HOUR_IN_MIN = 60;
+    public static final int ONE_HOUR_IN_MIN = (int) Duration.ofHours(1).toMinutes();
 
     public Optional<Route> createRoute(Node from, Node to, Instant startDate, Ship ship,
                                        MovementType movementType, Duration referenceTime) {
@@ -76,7 +72,7 @@ public class Router {
                 RouteSegment nextSegment = routeSegments.get(nextNode);
                 if (nextSegment == null || nextSegment.durationMinutes() > segmentDuration) {
                     int remainingTravelTime =
-                            (int) (GraphFactory.getDistance(current.coordinates(), to.coordinates()) / speedMpm);
+                            (int) (GeometryUtils.getDistance(current.coordinates(), to.coordinates()) / speedMpm);
                     queue.add(Map.entry(nextNode, segmentDuration + remainingTravelTime));
                     routeSegments.put(nextNode, new RouteSegment(current, segmentDuration, speedMpm));
                 }
@@ -88,6 +84,7 @@ public class Router {
     private static List<Point> normalizeRoutePoints(List<Node> nodes, Map<Node, RouteSegment> routeSegments) {
         List<Point> normalizedPoints = new ArrayList<>();
         int durationToCursor = 0;
+        normalizedPoints.add(nodes.getFirst().coordinates());
         for (int i = 0; i < nodes.size(); i++) {
             Node currentNode = nodes.get(i);
             int currentDuration = routeSegments.get(currentNode).durationMinutes();
@@ -100,22 +97,18 @@ public class Router {
                 Node prevNode = nodes.get(i - 1);
                 int durationBetweenCurrentAndPrev = currentDuration - routeSegments.get(prevNode).durationMinutes();
                 int partOfSegment = currentDuration - durationToCursorWithInterval;
-                Point point = findPointInPartOfSegment(currentNode.coordinates(), prevNode.coordinates(),
+                Point point = GeometryUtils.findPointInPartOfSegment(currentNode.coordinates(), prevNode.coordinates(),
                         partOfSegment / (float) durationBetweenCurrentAndPrev);
                 normalizedPoints.add(point);
             }
             durationToCursor = durationToCursorWithInterval;
         }
+        if(!normalizedPoints.contains(nodes.getLast().coordinates())) {
+            normalizedPoints.add(nodes.getLast().coordinates());
+        }
         return normalizedPoints;
     }
 
-    private static Point findPointInPartOfSegment(Point point1, Point point2, float ratio) {
-        GeodesicLine line = Geodesic.WGS84.InverseLine(point1.lat(), point1.lon(), point2.lat(), point2.lon(),
-                GeodesicMask.DISTANCE_IN | GeodesicMask.LATITUDE | GeodesicMask.LONGITUDE);
-        GeodesicData g = line.ArcPosition(line.Arc() * ratio, GeodesicMask.LATITUDE | GeodesicMask.LONGITUDE);
-        return new Point((float) g.lat2, (float) g.lon2);
-
-    }
 
     private static float getCurrentVelocity(Instant currentTime, List<ContinuousVelocity> velocities) {
         for (ContinuousVelocity continuousVelocity : velocities) {
@@ -139,7 +132,7 @@ public class Router {
         while (cursor != null) {
             Node previous = routeSegments.get(cursor).previous();
             if (previous != null) {
-                distance += GraphFactory.getDistance(cursor.coordinates(), previous.coordinates());
+                distance += GeometryUtils.getDistance(cursor.coordinates(), previous.coordinates());
             }
             route.add(cursor);
             cursor = previous;
@@ -164,7 +157,7 @@ public class Router {
         for (SparseList<Node> sparseList : sparseLists) {
             for (Node node : sparseList.getContent()) {
                 for (int i = 0; i < points.length; i++) {
-                    float currentDistance = GraphFactory.getDistance(points[i], node.coordinates());
+                    float currentDistance = GeometryUtils.getDistance(points[i], node.coordinates());
                     if (currentDistance < minDistance[i]) {
                         minDistance[i] = currentDistance;
                         result.set(i, node);

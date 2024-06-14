@@ -6,18 +6,14 @@ import dev.overwave.icebreaker.core.geospatial.Edge;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.SpatialVelocity;
+import dev.overwave.icebreaker.core.util.GeometryUtils;
 import dev.overwave.icebreaker.core.util.GridIndexer;
 import dev.overwave.icebreaker.core.util.ListUtils;
-import dev.overwave.icebreaker.core.util.LruCache;
 import lombok.experimental.UtilityClass;
-import net.sf.geographiclib.Geodesic;
-import net.sf.geographiclib.GeodesicLine;
-import net.sf.geographiclib.GeodesicMask;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 @UtilityClass
 public class GraphFactory {
@@ -26,9 +22,6 @@ public class GraphFactory {
     public static final float MIN_LONGITUDE = 20F;
     public static final float MAX_LONGITUDE = 200F;
     private static final float BASE_EDGE_LENGTH = 12_000F; // 1 km
-    private static final boolean DISABLE_LRU = true;
-
-    private static final LruCache<Entry<Point, Point>, Float> DISTANCE_CACHE = new LruCache<>(10);
 
     public Graph buildWeightedGraph(List<SpatialVelocity> velocityGrid) {
         List<SparseList<Node>> uniformGraph = buildUniformGraph();
@@ -104,7 +97,7 @@ public class GraphFactory {
             return;
         }
         Edge edge = new Edge(Map.entry(first, second),
-                getDistance(first.coordinates(), second.coordinates()),
+                GeometryUtils.getDistance(first.coordinates(), second.coordinates()),
                 continuousVelocities);
         first.edges().add(edge);
         second.edges().add(edge);
@@ -125,32 +118,14 @@ public class GraphFactory {
 
     private float getLatStep(Point point) {
         float testStep = 0.001F;
-        float distance = getDistance(point, new Point(point.lat() + testStep, point.lon()));
+        float distance = GeometryUtils.getDistance(point, new Point(point.lat() + testStep, point.lon()));
         return testStep * GraphFactory.BASE_EDGE_LENGTH / distance;
     }
 
     private float getLonStep(Point point) {
         float testStep = 0.001F;
-        float distance = getDistance(point, new Point(point.lat(), point.lon() + testStep));
+        float distance = GeometryUtils.getDistance(point, new Point(point.lat(), point.lon() + testStep));
         return testStep * GraphFactory.BASE_EDGE_LENGTH / distance;
-    }
-
-    public float getDistance(Point from, Point to) {
-        if (DISABLE_LRU) {
-            GeodesicLine line = Geodesic.WGS84.InverseLine(from.lat(), from.lon(), to.lat(), to.lon(),
-                    GeodesicMask.DISTANCE_IN | GeodesicMask.LATITUDE | GeodesicMask.LONGITUDE);
-            return (float) line.Distance();
-        }
-        Entry<Point, Point> entry = Map.entry(from, to);
-        Float cached = DISTANCE_CACHE.get(entry);
-        if (cached != null) {
-            return cached;
-        }
-        GeodesicLine line = Geodesic.WGS84.InverseLine(from.lat(), from.lon(), to.lat(), to.lon(),
-                GeodesicMask.DISTANCE_IN | GeodesicMask.LATITUDE | GeodesicMask.LONGITUDE);
-        float distance = (float) line.Distance();
-        DISTANCE_CACHE.put(entry, distance);
-        return distance;
     }
 
     public static void print() {
