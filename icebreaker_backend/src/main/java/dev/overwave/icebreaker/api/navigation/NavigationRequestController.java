@@ -57,6 +57,12 @@ public class NavigationRequestController {
         return navigationRequestService.getNavigationRequests(principal.getName());
     }
 
+    @PutMapping("/route-requests/reject")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public NavigationRequestDto rejectNavigationRequest(@RequestParam long id) {
+        return navigationRequestService.rejectNavigationRequest(id);
+    }
+
     @GetMapping("/velocity-intervals")
     public VelocityIntervalListDto getVelocityIntervals() {
         return new VelocityIntervalListDto(velocityIntervalService.getVelocityIntervals());
