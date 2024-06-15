@@ -11,18 +11,33 @@ import dev.overwave.icebreaker.core.util.GeometryUtils;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.stream.StreamSupport;
 
@@ -32,6 +47,80 @@ import static java.util.Spliterators.spliteratorUnknownSize;
 @UtilityClass
 public class XlsxParser {
     private static final Period VELOCITY_INTERVAL_OFFSET = Period.ofDays(365 * 4 + 1);
+
+    @SneakyThrows
+    public void createFileWithGanttDiagram(List<ShipSchedule> segmentsByShipName,
+                                           LocalDate firstDate, LocalDate finishDate) {
+        Workbook workbook = new XSSFWorkbook();
+
+        Sheet sheet = workbook.createSheet("Gantt diagram");
+        sheet.setColumnWidth(0, 6000);
+        sheet.setColumnWidth(1, 10000);
+
+        Row header = sheet.createRow(0);
+        Cell headerShipName = header.createCell(0, CellType.STRING);
+        headerShipName.setCellValue("Название судна");
+        Cell headerSegment = header.createCell(1, CellType.STRING);
+        headerSegment.setCellValue("Сегмент маршрута");
+        // заполняем 0ю колонку названиями кораблей и 1ю колонку инфой о сегментах
+        int rowNum = 0;
+        Map<Integer, ScheduleSegment> segmentsByRowIdx = new HashMap<>();
+        // названия кораблей и сегменты начинаются с 1й строки
+        for (ShipSchedule shipSchedule : segmentsByShipName) {
+            Row shipNameRow = sheet.createRow(++rowNum);
+            Cell shipNameCell = shipNameRow.createCell(0, CellType.STRING);
+            shipNameCell.setCellValue(shipSchedule.shipName());
+            Cell firstSegmentCell = shipNameRow.createCell(1, CellType.STRING);
+            List<ScheduleSegment> segments = shipSchedule.segments();
+            firstSegmentCell.setCellValue(segments.getFirst().startPointName() + " - "
+                    + segments.getFirst().finishPointName());
+            segmentsByRowIdx.put(rowNum, segments.getFirst());
+            for (int i = 1; i < segments.size(); i++) {
+                Row segmentRow = sheet.createRow(++rowNum);
+                Cell nextSegmentCell = segmentRow.createCell(1, CellType.STRING);
+                nextSegmentCell.setCellValue(segments.get(i).startPointName() + " - "
+                        + segments.get(i).finishPointName());
+                segmentsByRowIdx.put(rowNum, segments.get(i));
+            }
+        }
+
+        // стиль для строки с датами
+        DataFormat format = workbook.createDataFormat();
+        CellStyle dateStyle = workbook.createCellStyle();
+        dateStyle.setDataFormat(format.getFormat(DateParser.PATTERN));
+        dateStyle.setAlignment(HorizontalAlignment.CENTER);
+
+        // стиль для окрашивания ячеек
+        CellStyle colored = workbook.createCellStyle();
+        colored.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+        colored.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        int dateCellIdx = 2;
+        //заполняем остальные колонки с датами и закрашиваем ячейки
+        for (LocalDate date = firstDate; !date.isAfter(finishDate); date = date.plusDays(1)) {
+            sheet.setColumnWidth(dateCellIdx, 4000);
+            Cell dateCell = header.createCell(dateCellIdx, CellType.STRING);
+            dateCell.setCellStyle(dateStyle);
+            dateCell.setCellValue(DateParser.localDateToString(date));
+            for (int rowIdx = 1; rowIdx <= rowNum; rowIdx++) {
+                ScheduleSegment segment = segmentsByRowIdx.get(rowIdx);
+                Row segmentRow = sheet.getRow(rowIdx);
+                Cell segmentCell = segmentRow.createCell(dateCellIdx, CellType.BLANK);
+                if (segment.contains(date)) {
+                    segmentCell.setCellStyle(colored);
+                }
+            }
+            dateCellIdx++;
+        }
+
+        File currDir = new File(".");
+        String path = currDir.getAbsolutePath();
+        String fileLocation = path.substring(0, path.length() - 1) + "scheduleGantt.xlsx";
+
+        FileOutputStream outputStream = new FileOutputStream(fileLocation);
+        workbook.write(outputStream);
+        workbook.close();
+    }
 
     @SneakyThrows
     public List<List<RawVelocity>> parseIntegralVelocityTable(String filename) {
@@ -131,10 +220,10 @@ public class XlsxParser {
         // проходимся по всем листам документа, в которых лежат значения интегральной тяжести льда и сортируем по датам
         List<XSSFSheet> sheetsSorted =
                 StreamSupport.stream(spliteratorUnknownSize(workbook.iterator(), Spliterator.ORDERED), false)
-                .skip(2)
-                .sorted(Comparator.comparing(sheet -> DateParser.stringDateToInstant(sheet.getSheetName())))
-                .map(s -> (XSSFSheet) s)
-                .toList();
+                        .skip(2)
+                        .sorted(Comparator.comparing(sheet -> DateParser.stringDateToInstant(sheet.getSheetName())))
+                        .map(s -> (XSSFSheet) s)
+                        .toList();
         for (int i = 0; i < sheetsSorted.size(); i++) {
             // рассчитываем длительность между двумя датами (листами)
             XSSFSheet currentSheet = sheetsSorted.get(i);

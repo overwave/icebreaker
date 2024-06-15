@@ -11,7 +11,7 @@ import java.util.Locale;
 
 @UtilityClass
 public class DateParser {
-    private static final String PATTERN = "dd-MMM-yyyy";
+    public static final String PATTERN = "dd-MMM-yyyy";
 
     public Instant stringDateToInstant(String stringDate) {
         DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
@@ -20,5 +20,13 @@ public class DateParser {
                 .toFormatter(Locale.ENGLISH);
         LocalDate localDate = LocalDate.parse(stringDate, dateTimeFormatter);
         return localDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+    }
+
+    public String localDateToString(LocalDate date) {
+        DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .appendPattern(PATTERN)
+                .toFormatter(Locale.of("RU", "ru"));
+        return date.format(dateTimeFormatter);
     }
 }
