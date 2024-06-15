@@ -14,12 +14,13 @@ import java.util.List;
 @Component
 public class ShipRouteMapper {
 
-    public ShipRouteDto toShipRouteDto(long id, RoutePredictionSegment prediction, Route route) {
+    public ShipRouteDto toShipRouteDto(long id, RoutePredictionSegment prediction, Route route,
+                                       ScheduledShip icebreaker) {
         List<PointAndTimestamp> routes = createPointAndTimestamp(route.interval().instant(), route.normalizedPoints());
         return new ShipRouteDto(
                 id,
                 prediction.convoy(),
-                null,
+                icebreaker.getShipId(),
                 routes);
     }
 

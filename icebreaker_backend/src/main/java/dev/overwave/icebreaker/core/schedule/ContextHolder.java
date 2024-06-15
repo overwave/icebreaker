@@ -23,6 +23,7 @@ import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.core.ship.ShipMapper;
 import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.ship.ShipStatic;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,9 @@ public class ContextHolder {
 
     public void readGraph() {
         try {
+            log.info("Graph reading...");
             graph = SerializationUtils.readWeightedGraph("data/graph.lz4");
+            log.info("Graph read successfully");
         } catch (Exception e) {
             log.error("Failed to read graph!", e);
         }
@@ -70,7 +73,9 @@ public class ContextHolder {
         return graph;
     }
 
+    @Transactional
     public synchronized void readContext() {
+        log.info("Context reading...");
         Map<Long, NavigationRequestStatic> requests =
                 navigationRequestRepository.findAllByStatus(RequestStatus.PENDING).stream()
                         .map(navigationRequestMapper::toNavigationRequestStatic)
@@ -95,6 +100,7 @@ public class ContextHolder {
                 .collect(Collectors.toMap(VelocityIntervalStatic::id, s -> s, (s1, s2) -> s1, LinkedHashMap::new));
 
         context = new MetaRouteContext(ships, requests, points, routes, defaultRouteByRouteId, velocities);
+        log.info("Context read successfully");
     }
 
     public MetaRouteContext context() {
