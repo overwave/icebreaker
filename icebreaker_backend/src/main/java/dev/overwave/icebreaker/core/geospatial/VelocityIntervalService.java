@@ -5,6 +5,7 @@ import dev.overwave.icebreaker.core.exception.VelocityIntegralInfoAlreadyExists;
 import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.GraphFactory;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
+import dev.overwave.icebreaker.core.schedule.ContextHolder;
 import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.List;
 public class VelocityIntervalService {
     private final VelocityIntervalRepository velocityIntervalRepository;
     private final VelocityIntervalMapper velocityIntervalMapper;
+    private final ContextHolder contextHolder;
 
     public List<VelocityIntervalDto> getVelocityIntervals() {
         List<VelocityInterval> intervals = velocityIntervalRepository.findAll();
@@ -48,6 +50,7 @@ public class VelocityIntervalService {
         SerializationUtils.writeWeightedGraph(graph, "data/graph.lz4");
 
         velocityIntervalRepository.saveAllAndFlush(unsavedVelocityIntervals);
+        new Thread(contextHolder::readContext).start();
     }
 
 }

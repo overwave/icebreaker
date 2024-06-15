@@ -11,6 +11,7 @@ import dev.overwave.icebreaker.core.navigation.NavigationPoint;
 import dev.overwave.icebreaker.core.navigation.NavigationPointRepository;
 import dev.overwave.icebreaker.core.navigation.NavigationRoute;
 import dev.overwave.icebreaker.core.navigation.NavigationRouteRepository;
+import dev.overwave.icebreaker.core.schedule.ContextHolder;
 import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.core.ship.IceClass;
 import dev.overwave.icebreaker.core.ship.IceClassGroup;
@@ -38,6 +39,7 @@ public class DefaultRouteService {
     private final DefaultRouteRepository defaultRouteRepository;
     private final VelocityIntervalRepository velocityIntervalRepository;
     private final NavigationPointRepository navigationPointRepository;
+    private final ContextHolder contextHolder;
     private final ObjectMapper objectMapper;
 
     public void createAllDefaultRoutes() {
@@ -149,22 +151,12 @@ public class DefaultRouteService {
                 }
             }
         }
-
+        new Thread(contextHolder::readContext).start();
     }
 
     private Map<IceClassGroup, IceClass> getIceClassByGroup() {
         return Arrays.stream(IceClass.values())
                 .collect(Collectors.toMap(IceClass::getGroup, it -> it, (a, b) -> b));
-    }
-
-    @SneakyThrows
-    private String serializeNodes(Optional<Route> routeO) {
-        List<Point> points = routeO.stream()
-                .map(Route::nodes)
-                .flatMap(List::stream)
-                .map(Node::coordinates)
-                .toList();
-        return objectMapper.writeValueAsString(points);
     }
 
     @SneakyThrows

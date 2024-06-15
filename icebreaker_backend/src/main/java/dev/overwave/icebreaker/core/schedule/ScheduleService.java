@@ -4,33 +4,13 @@ import dev.overwave.icebreaker.api.navigation.ShipRouteDto;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
-import dev.overwave.icebreaker.core.geospatial.VelocityInterval;
-import dev.overwave.icebreaker.core.geospatial.VelocityIntervalMapper;
-import dev.overwave.icebreaker.core.geospatial.VelocityIntervalRepository;
 import dev.overwave.icebreaker.core.geospatial.VelocityIntervalStatic;
-import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.map.Mercator;
 import dev.overwave.icebreaker.core.navigation.MovementType;
-import dev.overwave.icebreaker.core.navigation.NavigationPointMapper;
-import dev.overwave.icebreaker.core.navigation.NavigationPointRepository;
 import dev.overwave.icebreaker.core.navigation.NavigationPointStatic;
-import dev.overwave.icebreaker.core.navigation.NavigationRequestMapper;
-import dev.overwave.icebreaker.core.navigation.NavigationRequestRepository;
-import dev.overwave.icebreaker.core.navigation.NavigationRequestStatic;
-import dev.overwave.icebreaker.core.navigation.NavigationRouteMapper;
-import dev.overwave.icebreaker.core.navigation.NavigationRouteRepository;
-import dev.overwave.icebreaker.core.navigation.NavigationRouteStatic;
-import dev.overwave.icebreaker.core.navigation.RequestStatus;
-import dev.overwave.icebreaker.core.route.DefaultRoute;
-import dev.overwave.icebreaker.core.route.DefaultRouteMapper;
-import dev.overwave.icebreaker.core.route.DefaultRouteRepository;
-import dev.overwave.icebreaker.core.route.DefaultRouteStatic;
 import dev.overwave.icebreaker.core.route.Route;
 import dev.overwave.icebreaker.core.route.Router;
 import dev.overwave.icebreaker.core.schedule.ConfirmedRouteSegment.ConfirmedRouteSegmentBuilder;
-import dev.overwave.icebreaker.core.serialization.SerializationUtils;
-import dev.overwave.icebreaker.core.ship.ShipMapper;
-import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.ship.ShipStatic;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +30,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -67,44 +46,21 @@ import static java.util.Objects.requireNonNull;
 @Service
 @RequiredArgsConstructor
 public class ScheduleService {
-    public static final Duration DURATION_MAX = Duration.ofDays(10000);
-    private static Graph GRAPH;
-
-    private final NavigationRequestRepository navigationRequestRepository;
-    private final NavigationRequestMapper navigationRequestMapper;
-
-    private final NavigationPointRepository navigationPointRepository;
-    private final NavigationPointMapper navigationPointMapper;
-
-    private final NavigationRouteRepository navigationRouteRepository;
-    private final NavigationRouteMapper navigationRouteMapper;
-
-    private final DefaultRouteRepository defaultRouteRepository;
-    private final DefaultRouteMapper defaultRouteMapper;
-
-    private final ShipRepository shipRepository;
-    private final ShipMapper shipMapper;
-
+    private final ContextHolder contextHolder;
     private final ShipRouteMapper shipRouteMapper;
-
-    private final VelocityIntervalRepository velocityIntervalRepository;
-    private final VelocityIntervalMapper velocityIntervalMapper;
 
     private final IcebreakerLocationRepository icebreakerLocationRepository;
     private final MetaRouter metaRouter;
 
     @PostConstruct
     void tryReadGraph() {
-        try {
-            GRAPH = SerializationUtils.readWeightedGraph("data/graph.lz4");
-        } catch (Exception e) {
-            log.error("Failed to read graph!", e);
-        }
+        new Thread(contextHolder::readGraph).start();
+        new Thread(contextHolder::readContext).start();
     }
 
     public List<ShipRouteDto> createPreliminaryShipRoute(long shipId) {
         List<ScheduledShip> ships = new ArrayList<>();
-        MetaRouteContext context = createContext();
+        MetaRouteContext context = contextHolder.context();
 
         icebreakerLocationRepository.findAll().stream()
                 .map(il -> ScheduledShip.builder()
@@ -141,7 +97,7 @@ public class ScheduleService {
             NavigationPointStatic from = segment.from();
             NavigationPointStatic to = segment.to();
             MovementType movementType = segment.convoy() ? MovementType.FOLLOWING : MovementType.INDEPENDENT;
-            Map<Point, Node> nodes = Router.findClosestNodes(GRAPH, from.point(), to.point());
+            Map<Point, Node> nodes = Router.findClosestNodes(contextHolder.graph(), from.point(), to.point());
             Route route = Router.createRoute(nodes.get(from.point()), nodes.get(to.point()), segment.interval().start(),
                     context.ships().get(shipId), movementType, Duration.ZERO).orElseThrow();
 
@@ -154,9 +110,9 @@ public class ScheduleService {
         Instant now = Instant.EPOCH;
         List<ScheduledShip> ships = new ArrayList<>(); // priority queue by action end eta?
         List<ConvoyRequest> convoyRequests = new ArrayList<>();
-        MetaRouteContext context = createContext();
 
         icebreakerLocationRepository.findAll().stream()
+//                .limit(2)
                 .map(il -> ScheduledShip.builder()
                         .shipId(il.getIcebreaker().getId())
                         .currentNavigationPointId(il.getStartPoint().getId())
@@ -168,7 +124,9 @@ public class ScheduleService {
                         .build())
                 .forEach(ships::add);
 
+        MetaRouteContext context = contextHolder.context();
         context.requests().values().stream()
+//                .limit(4)
                 .map(nr -> ScheduledShip.builder()
                         .shipId(nr.shipId())
                         .currentNavigationPointId(nr.startPointId())
@@ -182,14 +140,33 @@ public class ScheduleService {
 
 
         while (areMovingShips(ships)) {
-            predictFullRoutes(ships, convoyRequests, context);
-            assignIcebreakers(ships, convoyRequests, context);
+            predictFullRoutes(ships, convoyRequests);
+//            drawConvoyRequests(convoyRequests, context);
+            assignIcebreakers(ships, convoyRequests);
 
-            now = updateTime(now, ships, context);
+            now = updateTime(now, ships);
             convoyRequests.clear();
             ships.forEach(s -> s.getConvoyRequests().clear());
         }
-        System.out.println(convoyRequests);
+        for (ScheduledShip ship : ships) {
+            for (ConfirmedRouteSegment segment : ship.getRouteSegments()) {
+                StringBuilder builder = new StringBuilder();
+                builder.append(context.ships().get(ship.getShipId()).name())
+                        .append(" плывёт из ")
+                        .append(segment.from().name())
+                        .append(" в ")
+                        .append(segment.to().name())
+                        .append(" ")
+                        .append(segment.interval().start())
+                        .append(" -> ")
+                        .append(segment.interval().end());
+                if (segment.convoy()) {
+                    builder.append(" с кораблём ")
+                            .append(segment.otherShips().getFirst().name());
+                }
+                log.info(builder.toString());
+            }
+        }
     }
 
     @SneakyThrows
@@ -228,43 +205,49 @@ public class ScheduleService {
 
     private boolean areMovingShips(List<ScheduledShip> ships) {
         for (ScheduledShip ship : ships) {
-            if (ship.isIcebreaker() && ship.getStatus() != ScheduleStatus.FREE) {
-                return true;
-            }
-            Set<ScheduleStatus> finishStatuses = Set.of(ScheduleStatus.STUCK, ScheduleStatus.ARRIVED);
-            if (!ship.isIcebreaker() && !finishStatuses.contains(ship.getStatus())) {
-                return true;
+            if (ship.isIcebreaker()) {
+                if (ship.getStatus() != ScheduleStatus.FREE) {
+                    return true;
+                }
+            } else {
+                Set<ScheduleStatus> finishStatuses = Set.of(ScheduleStatus.STUCK, ScheduleStatus.ARRIVED);
+                if (!finishStatuses.contains(ship.getStatus())) {
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    private Instant updateTime(Instant now, List<ScheduledShip> ships, MetaRouteContext context) {
-        Instant nextTick = ships.getFirst().getActionEndEta();
+    private Instant updateTime(Instant now, List<ScheduledShip> ships) {
+        Instant nextTick = Instant.MAX;
         ships.sort(Comparator.comparing(ScheduledShip::isIcebreaker).reversed()); // icebreakers first
         for (ScheduledShip ship : ships) {
             Set<ScheduleStatus> readyStatuses = Set.of(ScheduleStatus.READY_TO_MOVE, ScheduleStatus.READY_TO_CONVOY);
             if (readyStatuses.contains(ship.getStatus())) {
-                processTickBefore(ship, now, context);
+                processTickBefore(ship, now);
             }
             nextTick = (ship.getActionEndEta().isAfter(now) && ship.getActionEndEta().isBefore(nextTick)) ?
                     ship.getActionEndEta() : nextTick;
         }
-        log.error("Fast forward to {}", nextTick);
+        if (nextTick.equals(Instant.MAX)) {
+            nextTick = now.plus(Duration.ofMinutes(1));
+        }
         for (ScheduledShip ship : ships) {
             if (!nextTick.isBefore(ship.getActionEndEta())) {
-                processTickAfter(ship, nextTick, context);
+                processTickAfter(ship, nextTick);
             }
         }
         return nextTick;
     }
 
-    private void processTickBefore(ScheduledShip ship, Instant now, MetaRouteContext context) {
+    private void processTickBefore(ScheduledShip ship, Instant now) {
+        MetaRouteContext context = contextHolder.context();
         switch (ship.getStatus()) {
             case READY_TO_MOVE -> {
                 NavigationPointStatic from = context.points().get(ship.getCurrentNavigationPointId());
                 NavigationPointStatic to = context.points().get(ship.getNextNavigationPointId());
-                Map<Point, Node> nodes = Router.findClosestNodes(GRAPH, from.point(), to.point());
+                Map<Point, Node> nodes = Router.findClosestNodes(contextHolder.graph(), from.point(), to.point());
                 Duration referenceDuration = Duration.between(now, ship.getActionEndEta()).multipliedBy(5);
                 Optional<Route> routeO = Router.createRoute(nodes.get(from.point()), nodes.get(to.point()), now,
                         context.ships().get(ship.getShipId()), MovementType.INDEPENDENT, referenceDuration);
@@ -281,28 +264,25 @@ public class ScheduleService {
                     ship.setStatus(ScheduleStatus.MOVING)
                             .setActionEndEta(route.interval().end())
                             .getRouteSegments().add(confirmedRouteSegment);
-                    log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
-                            ScheduleStatus.READY_TO_MOVE, ScheduleStatus.MOVING);
+//                    log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
+//                            ScheduleStatus.READY_TO_MOVE, ScheduleStatus.MOVING);
                 } else {
                     // не смогли построить маршрут???
                     ship.setStatus(ScheduleStatus.WAITING)
                             .setActionEndEta(now.plus(1, ChronoUnit.DAYS));
-                    log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
-                            ScheduleStatus.READY_TO_MOVE, ScheduleStatus.WAITING);
+//                    log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
+//                            ScheduleStatus.READY_TO_MOVE, ScheduleStatus.WAITING);
                 }
             }
-            case READY_TO_CONVOY -> {
-                processReadyToConvoy(ship, now, context);
-            }
-            default -> {
-                throw new OutOfMemoryError();
-            }
+            case READY_TO_CONVOY -> processReadyToConvoy(ship, now, context);
+            default -> throw new OutOfMemoryError();
         }
     }
 
     private void processReadyToConvoy(ScheduledShip ship, Instant now, MetaRouteContext context) {
         ScheduledShip follower = ship.getConvoyRequests().getFirst().getShip();
-        if (follower.getCurrentNavigationPointId() != ship.getCurrentNavigationPointId()) {
+        if (follower.getStatus() != ScheduleStatus.READY_TO_FOLLOW ||
+            follower.getCurrentNavigationPointId() != ship.getCurrentNavigationPointId()) {
             ship.setStatus(ScheduleStatus.FREE)
                     .setActionEndEta(now);
             return;
@@ -310,10 +290,9 @@ public class ScheduleService {
         // move!
         NavigationPointStatic from = context.points().get(follower.getCurrentNavigationPointId());
         NavigationPointStatic to = context.points().get(follower.getNextNavigationPointId());
-        Map<Point, Node> nodes = Router.findClosestNodes(GRAPH, from.point(), to.point());
-        Duration referenceDuration = Duration.between(now, follower.getActionEndEta()).multipliedBy(5);
+        Map<Point, Node> nodes = Router.findClosestNodes(contextHolder.graph(), from.point(), to.point());
         Optional<Route> routeO = Router.createRoute(nodes.get(from.point()), nodes.get(to.point()), now,
-                context.ships().get(follower.getShipId()), MovementType.FOLLOWING, referenceDuration);
+                context.ships().get(follower.getShipId()), MovementType.FOLLOWING, Duration.ZERO);
 
         if (routeO.isEmpty()) {
             // не смогли построить маршрут???
@@ -342,38 +321,28 @@ public class ScheduleService {
         ConfirmedRouteSegment icebreakerSegment =
                 builder.otherShips(List.of(context.ships().get(follower.getShipId()))).build();
         ship.setStatus(ScheduleStatus.MOVING)
+                .setNextNavigationPointId(follower.getNextNavigationPointId())
+                .setFinishNavigationPointId(follower.getNextNavigationPointId())
                 .setActionEndEta(route.interval().end())
                 .getRouteSegments().add(icebreakerSegment);
     }
 
-    private void processTickAfter(ScheduledShip ship, Instant now, MetaRouteContext context) {
+    private void processTickAfter(ScheduledShip ship, Instant now) {
         switch (ship.getStatus()) {
-            case WAITING -> {
+            case WAITING, READY_TO_FOLLOW -> {
                 ship.setStatus(ScheduleStatus.FREE);
                 if (ship.isIcebreaker()) {
                     ship.setFinishNavigationPointId(null);
                 }
-                log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
-                        ScheduleStatus.WAITING, ScheduleStatus.FREE);
             }
-            case MOVING -> {
-                ship.setStatus(ScheduleStatus.FREE)
-                        .setCurrentNavigationPointId(ship.getNextNavigationPointId());
-                log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
-                        ScheduleStatus.MOVING, ScheduleStatus.FREE);
-            }
-            case FREE -> {
-                log.warn("Ship {} AFK", context.ships().get(ship.getShipId()));
-                ship.setActionEndEta(now);
-            }
-            default -> {
-                throw new OutOfMemoryError();
-            }
+            case MOVING -> ship.setStatus(ScheduleStatus.FREE)
+                    .setCurrentNavigationPointId(ship.getNextNavigationPointId());
+            case FREE -> ship.setActionEndEta(now);
+            default -> throw new OutOfMemoryError();
         }
     }
 
-    private void assignIcebreakers(List<ScheduledShip> ships, List<ConvoyRequest> convoyRequests,
-                                   MetaRouteContext context) {
+    private void assignIcebreakers(List<ScheduledShip> ships, List<ConvoyRequest> convoyRequests) {
         List<ConvoyRequest> closestConvoyRequests = convoyRequests.stream()
                 .collect(Collectors.toMap(cr -> cr.getShip().getShipId(), cr -> cr, this::getEarlierRequest))
                 .values().stream()
@@ -390,7 +359,7 @@ public class ScheduleService {
             Instant fastestArrival = Instant.MAX;
             ScheduledShip fastestIcebreaker = null;
             for (ScheduledShip icebreaker : icebreakers) {
-                Instant etaToFinish = getEtaToFinishCurrent(context, icebreaker, target);
+                Instant etaToFinish = getEtaToFinishCurrent(icebreaker, target);
                 if (etaToFinish == null) {
                     continue;
                 }
@@ -404,11 +373,10 @@ public class ScheduleService {
                 continue;
             }
             if (fastestIcebreaker.getStatus() != ScheduleStatus.FREE) {
-//                log.info("Fastest icebreaker is busy, not assigned");
                 continue;
             }
             fastestIcebreaker.setFinishNavigationPointId(convoyRequest.getRouteSegment().from().id());
-            List<RoutePredictionSegment> route = predictRoute(fastestIcebreaker, context);
+            List<RoutePredictionSegment> route = predictRoute(fastestIcebreaker);
             Objects.requireNonNull(route);
             if (route.isEmpty()) {
                 fastestIcebreaker.setStatus(ScheduleStatus.READY_TO_CONVOY)
@@ -424,13 +392,12 @@ public class ScheduleService {
 
             convoyRequest.setIcebreaker(fastestIcebreaker);
             fastestIcebreaker.getConvoyRequests().add(convoyRequest);
-            log.info("Icebreaker {} assigned to request {}", context.ships().get(fastestIcebreaker.getShipId()),
-                    convoyRequest);
+//            log.info("Icebreaker {} assigned to request {}", context.ships().get(fastestIcebreaker.getShipId()),
+//                    convoyRequest);
         }
     }
 
-    private Instant getEtaToFinishCurrent(MetaRouteContext context, ScheduledShip icebreaker,
-                                          NavigationPointStatic target) {
+    private Instant getEtaToFinishCurrent(ScheduledShip icebreaker, NavigationPointStatic target) {
         long currentPointId = icebreaker.getStatus() == ScheduleStatus.MOVING ? // другие способы езды?
                 icebreaker.getNextNavigationPointId() :
                 icebreaker.getCurrentNavigationPointId();
@@ -447,22 +414,22 @@ public class ScheduleService {
                 .finishNavigationPointId(finishPointId)
                 .actionEndEta(icebreaker.getActionEndEta())
                 .build();
-        Duration eta = estimateEtaToFinish(context, virtualIcebreaker);
+        Duration eta = estimateEtaToFinish(virtualIcebreaker);
         if (eta == null) {
             return null;
         }
         virtualIcebreaker.setCurrentNavigationPointId(finishPointId)
                 .setFinishNavigationPointId(target.id())
                 .setActionEndEta(icebreaker.getActionEndEta().plus(eta));
-        Duration etaAfter = estimateEtaToFinish(context, virtualIcebreaker);
+        Duration etaAfter = estimateEtaToFinish(virtualIcebreaker);
         if (etaAfter == null) {
             return null;
         }
         return icebreaker.getActionEndEta().plus(eta).plus(etaAfter);
     }
 
-    private Duration estimateEtaToFinish(MetaRouteContext context, ScheduledShip virtualIcebreaker) {
-        List<RoutePredictionSegment> route = predictRoute(virtualIcebreaker, context);
+    private Duration estimateEtaToFinish(ScheduledShip virtualIcebreaker) {
+        List<RoutePredictionSegment> route = predictRoute(virtualIcebreaker);
         if (route == null) {
             return null;
         }
@@ -474,61 +441,39 @@ public class ScheduleService {
                 cr1 : cr2;
     }
 
-    private MetaRouteContext createContext() {
-        Map<Long, NavigationRequestStatic> requests =
-                navigationRequestRepository.findAllByStatus(RequestStatus.PENDING).stream()
-                        .map(navigationRequestMapper::toNavigationRequestStatic)
-                        .collect(Collectors.toMap(NavigationRequestStatic::id, nr -> nr));
-        Map<Long, NavigationPointStatic> points = navigationPointRepository.findAll().stream()
-                .map(navigationPointMapper::toNavigationPointStatic)
-                .collect(Collectors.toMap(NavigationPointStatic::id, np -> np));
-        Map<Long, NavigationRouteStatic> routes =
-                navigationRouteRepository.findAll().stream()
-                        .map(navigationRouteMapper::toNavigationRouteStatic)
-                        .collect(Collectors.toMap(NavigationRouteStatic::id, nr -> nr));
-        Map<Long, List<DefaultRouteStatic>> defaultRouteByRouteId = defaultRouteRepository.findAll().stream()
-                .filter(DefaultRoute::isPossible)
-                .map(defaultRouteMapper::toDefaultRouteStatic)
-                .collect(Collectors.groupingBy(DefaultRouteStatic::routeId));
-        Map<Long, ShipStatic> ships = shipRepository.findAll().stream()
-                .map(shipMapper::toShipStatic)
-                .collect(Collectors.toMap(ShipStatic::id, s -> s));
-        Map<Long, VelocityIntervalStatic> velocities = velocityIntervalRepository.findAll().stream()
-                .sorted(Comparator.comparing(VelocityInterval::getStartDate))
-                .map(velocityIntervalMapper::toVelocityIntervalStatic)
-                .collect(Collectors.toMap(VelocityIntervalStatic::id, s -> s, (s1, s2) -> s1, LinkedHashMap::new));
-
-        return new MetaRouteContext(ships, requests, points, routes, defaultRouteByRouteId, velocities);
-    }
-
-    private void predictFullRoutes(List<ScheduledShip> ships, List<ConvoyRequest> convoyRequests,
-                                   MetaRouteContext context) {
+    private void predictFullRoutes(List<ScheduledShip> ships, List<ConvoyRequest> convoyRequests) {
         List<ScheduledShip> freeShips = ships.stream()
                 .filter(s -> Set.of(ScheduleStatus.FREE, ScheduleStatus.WAITING).contains(s.getStatus()))
                 .filter(s -> !s.isIcebreaker())
                 .toList();
         for (ScheduledShip freeShip : freeShips) {
-//            log.info("_____________________________________________________");
-//            log.info("Predicting route for " + context.ships().get(freeShip.getShipId()).name());
-            List<RoutePredictionSegment> prediction = predictRoute(freeShip, context);
+            List<RoutePredictionSegment> prediction = predictRoute(freeShip);
             if (prediction == null) {
-                log.info("Ship {} is stuck", context.ships().get(freeShip.getShipId()).name());
+//                log.info("Ship {} is stuck", context.ships().get(freeShip.getShipId()).name());
                 freeShip.setStatus(ScheduleStatus.STUCK);
                 freeShip.setActionEndEta(Instant.MAX);
                 continue;
             }
-            for (RoutePredictionSegment segment : prediction) {
-//                log.info("From {} to {}, [{} -> {}]", segment.from().name(), segment.to().name(),
-//                        asLDT(segment.interval().start()), asLDT(segment.interval().end()));
+            if (prediction.isEmpty()) {
+//                log.info("Ship {} has arrived", context.ships().get(freeShip.getShipId()).name());
+                freeShip.setStatus(ScheduleStatus.ARRIVED);
+                freeShip.setActionEndEta(Instant.MAX);
+                continue;
             }
             RoutePredictionSegment firstPoint = prediction.getFirst();
-            freeShip//.setStatus(firstPoint.convoy() ? ScheduleStatus.WAITING : ScheduleStatus.READY_TO_MOVE)
-                    .setNextNavigationPointId(firstPoint.to().id())
-            ;//                    .setActionEndEta(firstPoint.interval().instant());
-            if (freeShip.getStatus() == ScheduleStatus.FREE) {
-                freeShip.setStatus(ScheduleStatus.READY_TO_MOVE);
+            if (firstPoint.from().equals(firstPoint.to())) {
+                // надо подождать
+                if (freeShip.getStatus() == ScheduleStatus.FREE) {
+                    freeShip.setStatus(ScheduleStatus.WAITING)
+                            .setActionEndEta(firstPoint.interval().end());
+                }
+            } else {
+                freeShip.setNextNavigationPointId(firstPoint.to().id());
+                if (freeShip.getStatus() == ScheduleStatus.FREE) {
+                    freeShip.setStatus(firstPoint.convoy() ? ScheduleStatus.READY_TO_FOLLOW :
+                            ScheduleStatus.READY_TO_MOVE);
+                }
             }
-
             for (RoutePredictionSegment route : prediction) {
                 if (route.convoy()) {
                     ConvoyRequest convoyRequest = new ConvoyRequest(freeShip, null, route);
@@ -543,10 +488,8 @@ public class ScheduleService {
         return instant.atOffset(ZoneOffset.UTC).toLocalDateTime();
     }
 
-    private List<RoutePredictionSegment> predictRoute(ScheduledShip scheduledShip, MetaRouteContext context) {
-//        if (scheduledShip.getStatus() != ScheduleStatus.FREE) {
-//            throw new IllegalStateException();
-//        }
+    private List<RoutePredictionSegment> predictRoute(ScheduledShip scheduledShip) {
+        MetaRouteContext context = contextHolder.context();
         ShipStatic ship = context.ships().get(scheduledShip.getShipId());
         NavigationPointStatic from = context.points().get(scheduledShip.getCurrentNavigationPointId());
         NavigationPointStatic to = context.points().get(scheduledShip.getFinishNavigationPointId());
@@ -555,20 +498,16 @@ public class ScheduleService {
         while (true) {
             route = metaRouter.createRoute(from, to, ship, startAt, context);
             if (route != null && route.isEmpty()) {
-                // already there
                 return List.of();
             }
             if (route != null) {
-//                log.info("Route found!");
                 break;
             }
             Interval interval = getInterval(startAt, context.velocities().values());
             Instant afterWaiting = interval.end();
             if (afterWaiting.equals(startAt)) {
-//                log.info("Exceeded time range!");
                 return null;
             }
-//            log.info("Skipping to next interval...");
             startAt = afterWaiting;
 
         }

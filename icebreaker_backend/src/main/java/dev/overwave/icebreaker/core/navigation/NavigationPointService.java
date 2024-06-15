@@ -3,6 +3,7 @@ package dev.overwave.icebreaker.core.navigation;
 import dev.overwave.icebreaker.api.navigation.NavigationPointDto;
 import dev.overwave.icebreaker.core.exception.NavigationPointsInfoAlreadyExists;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
+import dev.overwave.icebreaker.core.schedule.ContextHolder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class NavigationPointService {
     private final NavigationPointRepository navigationPointRepository;
     private final NavigationRouteRepository navigationRouteRepository;
+    private final ContextHolder contextHolder;
     private final NavigationPointMapper mapper;
 
     public List<NavigationPointDto> getNavigationPoints() {
@@ -44,5 +46,6 @@ public class NavigationPointService {
             route.setPoint2(pointByExternalId.get(route.getPoint2().getExternalId()));
         }
         navigationRouteRepository.saveAllAndFlush(navigationRoutes);
+        new Thread(contextHolder::readContext).start();
     }
 }
