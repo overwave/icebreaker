@@ -6,6 +6,8 @@ import dev.overwave.icebreaker.api.navigation.NavigationRequestToSaveDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestWithRouteDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestsDtoWithRoute;
 import dev.overwave.icebreaker.api.navigation.RouteSegmentDto;
+import dev.overwave.icebreaker.api.navigation.ShipRouteDto;
+import dev.overwave.icebreaker.core.schedule.ScheduleService;
 import dev.overwave.icebreaker.core.ship.Ship;
 import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.user.User;
@@ -27,6 +29,7 @@ public class NavigationRequestService {
     private final ShipRepository shipRepository;
     private final NavigationPointRepository navigationPointRepository;
     private final UserRepository userRepository;
+    private final ScheduleService scheduleService;
 
     public void saveNavigationRequest(NavigationRequestToSaveDto requestDto) {
         Ship ship = shipRepository.findByIdOrThrow(requestDto.shipId());
@@ -95,5 +98,10 @@ public class NavigationRequestService {
         NavigationRequest request = navigationRequestRepository.findByIdOrThrow(id);
         request.setStatus(RequestStatus.REJECTED);
         return navigationRequestMapper.toNavigationRequestDto(navigationRequestRepository.save(request));
+    }
+
+    public List<ShipRouteDto> getShipRouteByRequestId(long navigationRequestId) {
+        NavigationRequest request = navigationRequestRepository.findByIdOrThrow(navigationRequestId);
+        return scheduleService.createPreliminaryShipRoute(request.getShip().getId());
     }
 }

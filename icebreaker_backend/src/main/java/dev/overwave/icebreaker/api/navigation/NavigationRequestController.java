@@ -82,4 +82,10 @@ public class NavigationRequestController {
         defaultRouteService.createAllDefaultRoutes();
     }
 
+    @GetMapping("/ship-route")
+    public List<ShipRouteDto> getShipRoutes(@RequestParam long navigationRequestId) {
+        return navigationRequestService.getShipRouteByRequestId(navigationRequestId);
+    }
+
+
 }
