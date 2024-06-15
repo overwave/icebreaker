@@ -90,7 +90,7 @@ public class ScheduleService {
                 .filter(scheduledShip -> scheduledShip.getShipId() == shipId)
                 .findFirst()
                 .orElseThrow();
-        List<RoutePredictionSegment> prediction = predictRoute(ship, context);
+        List<RoutePredictionSegment> prediction = predictRoute(ship);
         List<ShipRouteDto> routes = new ArrayList<>();
         for (int i = 0; i < prediction.size(); i++) {
             RoutePredictionSegment segment = prediction.get(i);
@@ -101,7 +101,8 @@ public class ScheduleService {
             Route route = Router.createRoute(nodes.get(from.point()), nodes.get(to.point()), segment.interval().start(),
                     context.ships().get(shipId), movementType, Duration.ZERO).orElseThrow();
 
-            routes.add(shipRouteMapper.toShipRouteDto(i, segment, route));
+            ScheduledShip icebreaker = ships.stream().filter(ScheduledShip::isIcebreaker).findFirst().orElseThrow();
+            routes.add(shipRouteMapper.toShipRouteDto(i, segment, route, icebreaker));
         }
         return routes;
     }
@@ -296,8 +297,8 @@ public class ScheduleService {
 
         if (routeO.isEmpty()) {
             // не смогли построить маршрут???
-            log.error("Processing tick for {}, status {} -> {}", context.ships().get(follower.getShipId()),
-                    ScheduleStatus.READY_TO_CONVOY, ScheduleStatus.READY_TO_CONVOY);
+//            log.error("Processing tick for {}, status {} -> {}", context.ships().get(follower.getShipId()),
+//                    ScheduleStatus.READY_TO_CONVOY, ScheduleStatus.READY_TO_CONVOY);
             return;
         }
         Route route = routeO.get();
@@ -308,16 +309,16 @@ public class ScheduleService {
                 .points(route.normalizedPoints())
                 .convoy(true);
 
-        log.error("Processing tick for {}, status {} -> {}", context.ships().get(follower.getShipId()),
-                follower.getStatus(), ScheduleStatus.MOVING);
+//        log.error("Processing tick for {}, status {} -> {}", context.ships().get(follower.getShipId()),
+//                follower.getStatus(), ScheduleStatus.MOVING);
         ConfirmedRouteSegment followerSegment =
                 builder.otherShips(List.of(context.ships().get(ship.getShipId()))).build();
         follower.setStatus(ScheduleStatus.MOVING)
                 .setActionEndEta(route.interval().end())
                 .getRouteSegments().add(followerSegment);
 
-        log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
-                ScheduleStatus.READY_TO_CONVOY, ScheduleStatus.MOVING);
+//        log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
+//                ScheduleStatus.READY_TO_CONVOY, ScheduleStatus.MOVING);
         ConfirmedRouteSegment icebreakerSegment =
                 builder.otherShips(List.of(context.ships().get(follower.getShipId()))).build();
         ship.setStatus(ScheduleStatus.MOVING)
