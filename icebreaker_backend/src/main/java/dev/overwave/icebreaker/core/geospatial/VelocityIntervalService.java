@@ -36,8 +36,8 @@ public class VelocityIntervalService {
         List<VelocityInterval> unsavedVelocityIntervals = first.velocities().stream()
                 .map(ContinuousVelocity::interval)
                 .map(interval -> VelocityInterval.builder()
-                        .startDate(interval.instant())
-                        .endDate(interval.instant().plus(interval.duration()))
+                        .startDate(interval.start())
+                        .endDate(interval.end())
                         .build())
                 .toList();
         // пишем в файл новые данные о ледовой проходимости в виде сетки

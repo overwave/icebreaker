@@ -11,7 +11,7 @@ import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.NavigationPointService;
 import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.core.ship.IceClass;
-import dev.overwave.icebreaker.core.ship.Ship;
+import dev.overwave.icebreaker.core.ship.ShipStatic;
 import dev.overwave.icebreaker.util.FileUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -50,7 +50,7 @@ class RouterTest {
         Map<Point, Node> pointNodeMap = Router.findClosestNodes(graph, from, to);
 
         Optional<Route> route = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(),
-                new Ship("Плот", IceClass.ARC_7, 18, false, null, null),
+                ShipStatic.builder().name("Плот").iceClass(IceClass.ARC_7).speed(18).icebreaker(false).build(),
                 MovementType.FOLLOWING, Duration.ZERO);
         assertThat(route).isPresent();
         printRoute(route.get(), "route_vrangel.json");
@@ -77,21 +77,22 @@ class RouterTest {
         System.out.println((System.currentTimeMillis() - before2) + " millis");
 
         Route route = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(),
-                new Ship("Плот", IceClass.ICE_2, 16, false, null, null),
+                ShipStatic.builder().name("Плот").iceClass(IceClass.ICE_2).speed(16).icebreaker(false).build(),
                 MovementType.FOLLOWING, Duration.ZERO).orElseThrow();
         printRoute(route, "route_novaya_zemlya.json");
 
         from = pointsByName.get("Дудинка");
         to = pointsByName.get("Архангельск");
         Route route2 = Router.createRoute(pointNodeMap.get(from), pointNodeMap.get(to), Instant.now(),
-                new Ship("Кобаблище", IceClass.ARC_7, 13, false, null, null),
+                ShipStatic.builder().name("Кобаблище").iceClass(IceClass.ICE_2).speed(13).icebreaker(false).build(),
                 MovementType.FOLLOWING, Duration.ZERO).orElseThrow();
         printRoute(route2, "route_dudinka.json");
 
         Point from2 = new Point(69.5F, 33.75F);
         Point to2 = new Point(76.2F, 58.3F);
         Instant startDate = Instant.parse("2020-04-05T00:00:00Z");
-        Ship ship = new Ship("Ship", IceClass.ARC_5, 16F, false, null, null);
+        ShipStatic ship = ShipStatic.builder().name("Ship").iceClass(IceClass.ARC_5)
+                .speed(16F).icebreaker(false).build();
 
         Optional<Route> route3 = Router.createRoute(pointNodeMap.get(from2), pointNodeMap.get(to2), startDate,
                 ship,
