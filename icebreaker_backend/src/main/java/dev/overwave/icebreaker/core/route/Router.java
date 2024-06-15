@@ -9,6 +9,7 @@ import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.graph.SparseList;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.ship.Ship;
+import dev.overwave.icebreaker.core.ship.ShipStatic;
 import dev.overwave.icebreaker.core.util.GeometryUtils;
 import lombok.experimental.UtilityClass;
 
@@ -33,13 +34,13 @@ public class Router {
     public static final float KNOTS_TO_METER_PER_MINUTES = 1852F / 60F;
     public static final int ONE_HOUR_IN_MIN = (int) Duration.ofHours(1).toMinutes();
 
-    public Optional<Route> createRoute(Node from, Node to, Instant startDate, Ship ship,
+    public Optional<Route> createRoute(Node from, Node to, Instant startDate, ShipStatic ship,
                                        MovementType movementType, Duration referenceTime) {
         PriorityQueue<Entry<Node, Integer>> queue = new PriorityQueue<>(Comparator.comparingInt(Entry::getValue));
         queue.add(Map.entry(from, 0));
 
         Map<Node, RouteSegment> routeSegments = new HashMap<>();
-        routeSegments.put(from, new RouteSegment(null, 0, ship.getSpeed()));
+        routeSegments.put(from, new RouteSegment(null, 0, ship.speed()));
 
         while (!queue.isEmpty()) {
             Node current = queue.poll().getKey();
@@ -140,9 +141,9 @@ public class Router {
         return new Route(new Interval(startDate, Duration.ofMinutes(timeInMinutes)), route.reversed(), distance, null);
     }
 
-    private static Entry<MovementType, Float> getIceCharacteristics(Ship ship, float integralVelocity,
+    private static Entry<MovementType, Float> getIceCharacteristics(ShipStatic ship, float integralVelocity,
                                                                     MovementType movementType) {
-        return ship.getIceClass().getGroup().getCharacteristics(integralVelocity, ship.getSpeed(), movementType);
+        return ship.iceClass().getGroup().getCharacteristics(integralVelocity, ship.speed(), movementType);
     }
 
     public Map<Point, Node> findClosestNodes(Graph graph, Point... points) {

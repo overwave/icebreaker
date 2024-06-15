@@ -14,7 +14,7 @@ import dev.overwave.icebreaker.core.navigation.NavigationRouteRepository;
 import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.core.ship.IceClass;
 import dev.overwave.icebreaker.core.ship.IceClassGroup;
-import dev.overwave.icebreaker.core.ship.Ship;
+import dev.overwave.icebreaker.core.ship.ShipStatic;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
@@ -57,8 +57,11 @@ public class DefaultRouteService {
                 // группы должны быть в порядке убывания по проходимости
                 List<IceClassGroup> iceClassGroupsDescending = Arrays.asList(IceClassGroup.values()).reversed();
                 for (IceClassGroup iceClassGroup : iceClassGroupsDescending) {
-                    Ship ship = new Ship("ship", iceClassByGroup.get(iceClassGroup), REFERENCE_SPEED,
-                            iceClassGroup.isIcebreaker(), null, null);
+                    ShipStatic ship = ShipStatic.builder()
+                            .iceClass(iceClassByGroup.get(iceClassGroup))
+                            .speed(REFERENCE_SPEED)
+                            .icebreaker(iceClassGroup.isIcebreaker())
+                            .build();
                     Point from = edge.getPoint1().getPoint();
                     Point to = edge.getPoint2().getPoint();
                     Optional<Route> routeFollowingO = Router.createRoute(

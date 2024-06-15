@@ -191,13 +191,13 @@ public class GraphFactoryTest {
             if (v < 0) {
                 graphics.setColor(new Color(73, 73, 73, 202));
             } else if (v < 10) {
-                graphics.setColor(new Color(255, 77, 77, 77));
+                graphics.setColor(new Color(255, 77, 77, 64));
             } else if (v < 14.5F) {
-                graphics.setColor(new Color(255, 128, 0, 77));
+                graphics.setColor(new Color(255, 128, 0, 64));
             } else if (v < 19.5F) {
-                graphics.setColor(new Color(255, 255, 0, 77));
+                graphics.setColor(new Color(255, 255, 0, 64));
             } else {
-                graphics.setColor(new Color(20, 255, 194, 77));
+                graphics.setColor(new Color(20, 255, 194, 51));
             }
 
             List<Entry<Double, Double>> coords = Stream.of(velocity.topLeft(), velocity.topRight(),
@@ -223,17 +223,6 @@ public class GraphFactoryTest {
             x[3] -= image.getHeight();
             graphics.fillPolygon(x, y, 4);
         }
-
-
-        Entry<Double, Double> dudinka = Mercator.pointToMercatorNormalized(new Point(69.4F, 86.15F));
-        graphics.setColor(Color.RED);
-        graphics.setStroke(new BasicStroke(7));
-        graphics.drawLine(
-                (int) (dudinka.getKey() * image.getWidth()),
-                (int) (dudinka.getValue() * image.getHeight()),
-                (int) (dudinka.getKey() * image.getWidth()),
-                (int) (dudinka.getValue() * image.getHeight())
-        );
 
         ImageIO.write(image, "PNG", new File("mercator_velocity_spatial.png"));
     }

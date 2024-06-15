@@ -82,13 +82,13 @@ public class VelocityLayerGenerator {
             if (velocity < 0) {
                 continue;
             } else if (velocity < 10) {
-                graphics.setColor(new Color(255, 77, 77, 77));
+                graphics.setColor(new Color(255, 77, 77, 64));
             } else if (velocity < 14.5F) {
-                graphics.setColor(new Color(255, 128, 0, 77));
+                graphics.setColor(new Color(255, 128, 0, 64));
             } else if (velocity < 19.5F) {
-                graphics.setColor(new Color(255, 255, 0, 77));
+                graphics.setColor(new Color(255, 255, 0, 64));
             } else {
-                graphics.setColor(new Color(20, 255, 194, 77));
+                graphics.setColor(new Color(20, 255, 194, 51));
             }
 
             int[] xPoints = new int[]{

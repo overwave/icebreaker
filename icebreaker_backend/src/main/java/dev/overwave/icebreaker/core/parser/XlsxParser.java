@@ -19,6 +19,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -30,6 +31,7 @@ import static java.util.Spliterators.spliteratorUnknownSize;
 
 @UtilityClass
 public class XlsxParser {
+    private static final Period VELOCITY_INTERVAL_OFFSET = Period.ofDays(365 * 4 + 1);
 
     @SneakyThrows
     public List<List<RawVelocity>> parseIntegralVelocityTable(String filename) {
@@ -144,7 +146,8 @@ public class XlsxParser {
             }
             // складываем ContinuousVelocity в правильном порядке
             float integralVelocity = (float) currentSheet.getRow(rowNum).getCell(cellNum).getNumericCellValue();
-            velocities.add(new ContinuousVelocity(integralVelocity, new Interval(instant, duration)));
+            velocities.add(new ContinuousVelocity(integralVelocity,
+                    new Interval(instant.plus(VELOCITY_INTERVAL_OFFSET), duration)));
         }
         return velocities;
     }
