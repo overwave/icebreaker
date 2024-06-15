@@ -1,5 +1,6 @@
 package dev.overwave.icebreaker.core.navigation;
 
+import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestPendingDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestToSaveDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestWithRouteDto;
@@ -56,7 +57,7 @@ public class NavigationRequestService {
         // хардкодим недостающую инфу
         List<NavigationRequest> pending = requestsByStatus.get(RequestStatus.PENDING);
         if (pending == null || pending.isEmpty()) {
-            return null;
+            return List.of();
         }
         NavigationRequest first = pending.getFirst();
         List<Ship> icebreakers = shipRepository.findAllByIcebreaker(true);
@@ -88,5 +89,11 @@ public class NavigationRequestService {
                 .filter(request -> request.getStatus() == RequestStatus.PENDING)
                 .map(navigationRequestMapper::toNavigationRequestPendingDto)
                 .toList();
+    }
+
+    public NavigationRequestDto rejectNavigationRequest(long id) {
+        NavigationRequest request = navigationRequestRepository.findByIdOrThrow(id);
+        request.setStatus(RequestStatus.REJECTED);
+        return navigationRequestMapper.toNavigationRequestDto(navigationRequestRepository.save(request));
     }
 }
