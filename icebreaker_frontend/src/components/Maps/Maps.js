@@ -15,7 +15,7 @@ export default function Maps({ navPoints, shipGeo }) {
 
     const onLoad = useCallback(it => {
             ymaps.current = it;
-            const layer = new ymaps.current.Layer('https://overwave.dev/icebreaker/tiles/2020-03-03/%z/%x-%y.jpg', {tileTransparent: true});
+            const layer = new ymaps.current.Layer('https://overwave.dev/icebreaker/tiles/2024-03-03/%z/%x-%y.jpg', {tileTransparent: true});
             ymap.current.layers.add(layer);
         }, [ymap, ymaps]
     );
@@ -67,7 +67,7 @@ export default function Maps({ navPoints, shipGeo }) {
                                         iconLayout: "default#image",
                                         iconImageSize: [17, 17],
                                         iconImageHref: pointIcon,
-                                        iconOffset: [0, 0]
+                                        iconOffset: [3, 29],
                                       }} properties={{
                                         balloonContentBody:
                                             point.name
