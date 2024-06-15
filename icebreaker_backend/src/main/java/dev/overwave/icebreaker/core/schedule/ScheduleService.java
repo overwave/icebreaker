@@ -1,5 +1,6 @@
 package dev.overwave.icebreaker.core.schedule;
 
+import dev.overwave.icebreaker.api.navigation.ShipRouteDto;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
@@ -32,15 +33,13 @@ import dev.overwave.icebreaker.core.ship.ShipMapper;
 import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.ship.ShipStatic;
 import jakarta.annotation.PostConstruct;
-import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.time.Duration;
@@ -86,6 +85,8 @@ public class ScheduleService {
     private final ShipRepository shipRepository;
     private final ShipMapper shipMapper;
 
+    private final ShipRouteMapper shipRouteMapper;
+
     private final VelocityIntervalRepository velocityIntervalRepository;
     private final VelocityIntervalMapper velocityIntervalMapper;
 
@@ -99,6 +100,54 @@ public class ScheduleService {
         } catch (Exception e) {
             log.error("Failed to read graph!", e);
         }
+    }
+
+    public List<ShipRouteDto> createPreliminaryShipRoute(long shipId) {
+        List<ScheduledShip> ships = new ArrayList<>();
+        MetaRouteContext context = createContext();
+
+        icebreakerLocationRepository.findAll().stream()
+                .map(il -> ScheduledShip.builder()
+                        .shipId(il.getIcebreaker().getId())
+                        .currentNavigationPointId(il.getStartPoint().getId())
+                        .status(ScheduleStatus.WAITING)
+                        .icebreaker(true)
+                        .nextNavigationPointId(il.getStartPoint().getId())
+                        .finishNavigationPointId(null)
+                        .actionEndEta(il.getStartDate())
+                        .build())
+                .forEach(ships::add);
+
+        context.requests().values().stream()
+                .map(nr -> ScheduledShip.builder()
+                        .shipId(nr.shipId())
+                        .currentNavigationPointId(nr.startPointId())
+                        .status(ScheduleStatus.WAITING)
+                        .icebreaker(false)
+                        .nextNavigationPointId(nr.startPointId())
+                        .finishNavigationPointId(nr.finishPointId())
+                        .actionEndEta(nr.startDate())
+                        .build())
+                .forEach(ships::add);
+
+        ScheduledShip ship = ships.stream()
+                .filter(scheduledShip -> scheduledShip.getShipId() == shipId)
+                .findFirst()
+                .orElseThrow();
+        List<RoutePredictionSegment> prediction = predictRoute(ship, context);
+        List<ShipRouteDto> routes = new ArrayList<>();
+        for (int i = 0; i < prediction.size(); i++) {
+            RoutePredictionSegment segment = prediction.get(i);
+            NavigationPointStatic from = segment.from();
+            NavigationPointStatic to = segment.to();
+            MovementType movementType = segment.convoy() ? MovementType.FOLLOWING : MovementType.INDEPENDENT;
+            Map<Point, Node> nodes = Router.findClosestNodes(GRAPH, from.point(), to.point());
+            Route route = Router.createRoute(nodes.get(from.point()), nodes.get(to.point()), segment.interval().start(),
+                    context.ships().get(shipId), movementType, Duration.ZERO).orElseThrow();
+
+            routes.add(shipRouteMapper.toShipRouteDto(i, segment, route));
+        }
+        return routes;
     }
 
     public void createSchedule() {

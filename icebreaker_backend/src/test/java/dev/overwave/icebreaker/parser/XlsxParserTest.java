@@ -5,12 +5,15 @@ import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.RawVelocity;
 import dev.overwave.icebreaker.core.navigation.NavigationPoint;
+import dev.overwave.icebreaker.core.parser.ScheduleSegment;
+import dev.overwave.icebreaker.core.parser.ShipSchedule;
 import dev.overwave.icebreaker.core.parser.XlsxParser;
 import dev.overwave.icebreaker.util.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +41,50 @@ class XlsxParserTest {
     private final RawVelocity rawVelocityA2 = new RawVelocity(new Point(44.8F, 23.2F), velocitiesA2);
     private final RawVelocity rawVelocityB1 = new RawVelocity(new Point(42.6F, 26.4F), velocitiesB1);
     private final RawVelocity rawVelocityB2 = new RawVelocity(new Point(43.7F, 24.5F), velocitiesB2);
+
+    @Test
+    void testCreateFileWithGanttDiagram() {
+        LocalDate firstDate = LocalDate.of(2024, 3, 3);
+        LocalDate lastDate = LocalDate.of(2024, 3, 11);
+        String ship1 = "Кораблик Белка";
+        List<ScheduleSegment> ship1Segments = List.of(
+                new ScheduleSegment(
+                        "Носик Родивона",
+                        "Жопка Бури",
+                        firstDate,
+                        LocalDate.of(2024, 3, 4)),
+                new ScheduleSegment(
+                        "Жопка Бури",
+                        "Компуктерное кресло",
+                        LocalDate.of(2024, 3, 5),
+                        LocalDate.of(2024, 3, 6))
+        );
+        ShipSchedule schedule1 = new ShipSchedule(ship1, ship1Segments);
+
+        String ship2 = "Кораблик Родивон";
+        List<ScheduleSegment> ship2Segments = List.of(
+                new ScheduleSegment(
+                        "Холодильник",
+                        "Кроватка",
+                        LocalDate.of(2024, 3, 7),
+                        LocalDate.of(2024, 3, 7))
+
+        );
+        ShipSchedule schedule2 = new ShipSchedule(ship2, ship2Segments);
+
+        String ship3 = "Кораблик Лизуня";
+        List<ScheduleSegment> ship3Segments = List.of(
+                new ScheduleSegment(
+                        "ПВЗ Озон",
+                        "Этлон кофи",
+                        LocalDate.of(2024, 3, 10),
+                        lastDate)
+
+        );
+        ShipSchedule schedule3 = new ShipSchedule(ship3, ship3Segments);
+
+        XlsxParser.createFileWithGanttDiagram(List.of(schedule1, schedule2, schedule3), firstDate, lastDate);
+    }
 
     @Test
     void testParseIntegralVelocityTable() {
