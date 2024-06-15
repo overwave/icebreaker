@@ -8,6 +8,7 @@ import dev.overwave.icebreaker.core.navigation.NavigationRouteStatic;
 import dev.overwave.icebreaker.core.route.DefaultRouteStatic;
 import dev.overwave.icebreaker.core.ship.ShipStatic;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -22,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.SequencedCollection;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MetaRouter {
@@ -44,6 +46,9 @@ public class MetaRouter {
 
                 DefaultRouteStatic defaultRoute = findDefaultRoute(context, routeId, startAt.plus(travelTime), ship);
                 if (defaultRoute == null) {
+//                    log.info("No route {} -> {}",
+//                            context.points().get(context.routes().get(routeId).pointIds().getKey()).name(),
+//                            context.points().get(context.routes().get(routeId).pointIds().getValue()).name());
                     continue;
                 }
 
@@ -57,10 +62,17 @@ public class MetaRouter {
                     queue.add(Map.entry(nextPoint, segmentDuration));
                     routeSegments.put(nextPoint, new RouteSegment(segmentDuration, current, routeId,
                             defaultRoute.movementType() == MovementType.FOLLOWING));
+//                    log.info("Added node {} -> {}",
+//                            context.points().get(context.routes().get(routeId).pointIds().getKey()).name(),
+//                            context.points().get(context.routes().get(routeId).pointIds().getValue()).name());
+                } else {
+//                    log.info("Skipped node {} -> {}",
+//                            context.points().get(context.routes().get(routeId).pointIds().getKey()).name(),
+//                            context.points().get(context.routes().get(routeId).pointIds().getValue()).name());
                 }
             }
         }
-        return List.of();
+        return null;
     }
 
     private List<RoutePredictionSegment> buildRoute(Instant startDate,
