@@ -8,6 +8,7 @@ import dev.overwave.icebreaker.api.navigation.NavigationRequestsDtoWithRoute;
 import dev.overwave.icebreaker.api.navigation.RouteSegmentDto;
 import dev.overwave.icebreaker.api.navigation.ShipRouteDto;
 import dev.overwave.icebreaker.core.schedule.ScheduleService;
+import dev.overwave.icebreaker.core.schedule.ContextHolder;
 import dev.overwave.icebreaker.core.ship.Ship;
 import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.user.User;
@@ -30,6 +31,7 @@ public class NavigationRequestService {
     private final NavigationPointRepository navigationPointRepository;
     private final UserRepository userRepository;
     private final ScheduleService scheduleService;
+    private final ContextHolder contextHolder;
 
     public void saveNavigationRequest(NavigationRequestToSaveDto requestDto) {
         Ship ship = shipRepository.findByIdOrThrow(requestDto.shipId());
@@ -38,6 +40,7 @@ public class NavigationRequestService {
         NavigationRequest navigationRequest = navigationRequestMapper.toNavigationRequest(requestDto, ship,
                 startPoint, finishPoint, RequestStatus.PENDING);
         navigationRequestRepository.save(navigationRequest);
+        new Thread(contextHolder::readContext).start();
     }
 
     public NavigationRequestsDtoWithRoute getNavigationRequests(String login) {
@@ -97,7 +100,9 @@ public class NavigationRequestService {
     public NavigationRequestDto rejectNavigationRequest(long id) {
         NavigationRequest request = navigationRequestRepository.findByIdOrThrow(id);
         request.setStatus(RequestStatus.REJECTED);
-        return navigationRequestMapper.toNavigationRequestDto(navigationRequestRepository.save(request));
+        NavigationRequest saved = navigationRequestRepository.saveAndFlush(request);
+        new Thread(contextHolder::readContext).start();
+        return navigationRequestMapper.toNavigationRequestDto(saved);
     }
 
     public List<ShipRouteDto> getShipRouteByRequestId(long navigationRequestId) {
