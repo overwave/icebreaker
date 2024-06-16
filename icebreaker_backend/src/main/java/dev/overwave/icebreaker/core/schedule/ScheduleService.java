@@ -1,10 +1,12 @@
 package dev.overwave.icebreaker.core.schedule;
 
-import dev.overwave.icebreaker.api.navigation.ShipRouteDto;
 import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.VelocityIntervalStatic;
+import dev.overwave.icebreaker.core.lock.Lock;
+import dev.overwave.icebreaker.core.lock.LockRepository;
+import dev.overwave.icebreaker.core.lock.LockStatus;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.NavigationPointStatic;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestMapper;
@@ -15,15 +17,14 @@ import dev.overwave.icebreaker.core.route.Route;
 import dev.overwave.icebreaker.core.route.Router;
 import dev.overwave.icebreaker.core.schedule.ConfirmedRouteSegment.ConfirmedRouteSegmentBuilder;
 import dev.overwave.icebreaker.core.ship.ShipStatic;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,85 +42,46 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class ScheduleService {
-    private final ContextHolder contextHolder;
-    private final ShipRouteMapper shipRouteMapper;
-
     private final IcebreakerLocationRepository icebreakerLocationRepository;
     private final NavigationRequestRepository navigationRequestRepository;
     private final NavigationRequestMapper navigationRequestMapper;
     private final ShipRouteRepository shipRouteRepository;
     private final ShipRouteService shipRouteService;
+    private final LockRepository lockRepository;
+    private final TransactionTemplate transactionTemplate;
+    private final ContextHolder contextHolder;
     private final MetaRouter metaRouter;
 
-    @PostConstruct
-    void tryReadGraph() {
-        new Thread(contextHolder::readGraph).start();
-        new Thread(contextHolder::readContext).start();
-    }
-
-    public List<ShipRouteDto> createPreliminaryShipRoute(long shipId) {
-        List<ScheduledShip> ships = new ArrayList<>();
-        MetaRouteContext context = contextHolder.context();
-
-        icebreakerLocationRepository.findAll().stream()
-                .map(il -> ScheduledShip.builder()
-                        .shipId(il.getIcebreaker().getId())
-                        .currentNavigationPointId(il.getStartPoint().getId())
-                        .status(ScheduleStatus.WAITING)
-                        .icebreaker(true)
-                        .nextNavigationPointId(il.getStartPoint().getId())
-                        .finishNavigationPointId(null)
-                        .actionEndEta(il.getStartDate())
-                        .build())
-                .forEach(ships::add);
-
-        Map<Long, NavigationRequestStatic> requests =
-                navigationRequestRepository.findAll().stream()
-                        .filter(nr -> nr.getStatus() != RequestStatus.REJECTED)
-                        .map(navigationRequestMapper::toNavigationRequestStatic)
-                        .collect(Collectors.toMap(NavigationRequestStatic::id, nr -> nr));
-        requests.values().stream()
-                .map(nr -> ScheduledShip.builder()
-                        .shipId(nr.shipId())
-                        .currentNavigationPointId(nr.startPointId())
-                        .status(ScheduleStatus.WAITING)
-                        .icebreaker(false)
-                        .nextNavigationPointId(nr.startPointId())
-                        .finishNavigationPointId(nr.finishPointId())
-                        .actionEndEta(nr.startDate())
-                        .build())
-                .forEach(ships::add);
-
-        ScheduledShip ship = ships.stream()
-                .filter(scheduledShip -> scheduledShip.getShipId() == shipId)
-                .findFirst()
-                .orElseThrow();
-        List<RoutePredictionSegment> prediction = predictRoute(ship);
-        List<ShipRouteDto> routes = new ArrayList<>();
-        for (int i = 0; i < prediction.size(); i++) {
-            RoutePredictionSegment segment = prediction.get(i);
-            NavigationPointStatic from = segment.from();
-            NavigationPointStatic to = segment.to();
-            MovementType movementType = segment.convoy() ? MovementType.FOLLOWING : MovementType.INDEPENDENT;
-            Map<Point, Node> nodes = Router.findClosestNodes(contextHolder.graph(), from.point(), to.point());
-            Route route = Router.createRoute(nodes.get(from.point()), nodes.get(to.point()), segment.interval().start(),
-                    context.ships().get(shipId), movementType, Duration.ZERO).orElseThrow();
-
-            ScheduledShip icebreaker = ships.stream().filter(ScheduledShip::isIcebreaker).findFirst().orElseThrow();
-            routes.add(shipRouteMapper.toShipRouteDto(i, segment, route));
-        }
-        return routes;
-    }
-
+    @SneakyThrows
     public void createSchedule() {
+        if (contextHolder.context() == null || contextHolder.graph() == null) {
+            throw new IllegalStateException("Контекст или граф ещё не загружены, пожалуйста подождите");
+        }
+
+        boolean acquiredLock = acquireLock();
+        if (!acquiredLock) {
+            while (!acquiredLock) {
+                acquiredLock = acquireLock();
+                Thread.sleep(Duration.ofSeconds(1));
+            }
+            releaseLock();
+            return;
+        }
+        try {
+            doCreateSchedule();
+        } finally {
+            releaseLock();
+        }
+    }
+
+    private void doCreateSchedule() {
         shipRouteRepository.deleteAll();
 
         Instant now = Instant.EPOCH;
-        List<ScheduledShip> ships = new ArrayList<>(); // priority queue by action end eta?
+        List<ScheduledShip> ships = new ArrayList<>();
         List<ConvoyRequest> convoyRequests = new ArrayList<>();
 
         icebreakerLocationRepository.findAll().stream()
-//                .limit(2)
                 .map(il -> ScheduledShip.builder()
                         .shipId(il.getIcebreaker().getId())
                         .currentNavigationPointId(il.getStartPoint().getId())
@@ -137,8 +99,7 @@ public class ScheduleService {
                         .map(navigationRequestMapper::toNavigationRequestStatic)
                         .collect(Collectors.toMap(NavigationRequestStatic::id, nr -> nr));
         requests.values().stream()
-                .filter(r -> r.startDate().isBefore(Instant.parse("2024-05-01T12:00:00Z")))
-//                .limit(6)
+                .filter(r -> r.startDate().isBefore(Instant.parse("2024-06-01T12:00:00Z")))
                 .map(nr -> ScheduledShip.builder()
                         .shipId(nr.shipId())
                         .requestId(nr.id())
@@ -161,6 +122,32 @@ public class ScheduleService {
             ships.forEach(s -> s.getConvoyRequests().clear());
         }
         shipRouteService.saveRoutes(ships);
+    }
+
+    private boolean acquireLock() {
+        return Boolean.TRUE.equals(transactionTemplate.execute(ts -> {
+            List<Lock> locks = lockRepository.findAll();
+            if (locks.isEmpty()) {
+                lockRepository.saveAndFlush(new Lock(LockStatus.CLOSED, Instant.now()));
+                return true;
+            }
+            Lock lock = locks.getFirst();
+            if (lock.getStatus() == LockStatus.CLOSED) {
+                return false;
+            }
+            lock.setStatus(LockStatus.CLOSED);
+            lock.setUpdatedAt(Instant.now());
+            lockRepository.saveAndFlush(lock);
+            return true;
+        }));
+    }
+
+    private void releaseLock() {
+        transactionTemplate.executeWithoutResult(ts -> {
+            Lock lock = lockRepository.findAll().getFirst();
+            lock.setStatus(LockStatus.OPEN);
+            lock.setUpdatedAt(Instant.now());
+        });
     }
 
     private boolean areMovingShips(List<ScheduledShip> ships) {
@@ -194,16 +181,9 @@ public class ScheduleService {
             nextTick = now.plus(Duration.ofMinutes(1));
         }
         for (ScheduledShip ship : ships) {
-//            if (nextTick.isAfter(ship.getActionEndEta())) {
-// плохо!
-//                System.out.println(ship);
-//            }
             if (!nextTick.isBefore(ship.getActionEndEta())) {
                 processTickAfter(ship, nextTick);
             }
-        }
-        if (nextTick.equals(Instant.parse("2024-04-28T00:00:00Z"))) {
-            System.out.println(nextTick);
         }
         return nextTick;
     }
@@ -231,18 +211,14 @@ public class ScheduleService {
                     ship.setStatus(ScheduleStatus.MOVING)
                             .setActionEndEta(route.interval().end())
                             .getRouteSegments().add(confirmedRouteSegment);
-//                    log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
-//                            ScheduleStatus.READY_TO_MOVE, ScheduleStatus.MOVING);
                 } else {
-                    // не смогли построить маршрут???
+                    // не смогли построить маршрут
                     ship.setStatus(ScheduleStatus.WAITING)
                             .setActionEndEta(now.plus(1, ChronoUnit.DAYS));
-//                    log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
-//                            ScheduleStatus.READY_TO_MOVE, ScheduleStatus.WAITING);
                 }
             }
             case READY_TO_CONVOY -> processReadyToConvoy(ship, now, context);
-            default -> throw new OutOfMemoryError();
+            default -> throw new IllegalStateException();
         }
     }
 
@@ -262,11 +238,7 @@ public class ScheduleService {
                 context.ships().get(follower.getShipId()), MovementType.FOLLOWING, Duration.ZERO);
 
         if (routeO.isEmpty()) {
-            // не смогли построить маршрут???
-//            log.error("Processing tick for {}, status {} -> {}", context.ships().get(follower.getShipId()),
-//                    ScheduleStatus.READY_TO_CONVOY, ScheduleStatus.READY_TO_CONVOY);
-            Router.createRoute(nodes.get(from.point()), nodes.get(to.point()), now,
-                    context.ships().get(follower.getShipId()), MovementType.FOLLOWING, Duration.ZERO);
+            // не смогли построить маршрут
             return;
         }
         Route route = routeO.get();
@@ -277,16 +249,12 @@ public class ScheduleService {
                 .points(route.normalizedPoints())
                 .convoy(true);
 
-//        log.error("Processing tick for {}, status {} -> {}", context.ships().get(follower.getShipId()),
-//                follower.getStatus(), ScheduleStatus.MOVING);
         ConfirmedRouteSegment followerSegment =
                 builder.otherShips(List.of(context.ships().get(ship.getShipId()))).build();
         follower.setStatus(ScheduleStatus.MOVING)
                 .setActionEndEta(route.interval().end())
                 .getRouteSegments().add(followerSegment);
 
-//        log.error("Processing tick for {}, status {} -> {}", context.ships().get(ship.getShipId()),
-//                ScheduleStatus.READY_TO_CONVOY, ScheduleStatus.MOVING);
         ConfirmedRouteSegment icebreakerSegment =
                 builder.otherShips(List.of(context.ships().get(follower.getShipId()))).build();
         ship.setStatus(ScheduleStatus.MOVING)
@@ -309,7 +277,7 @@ public class ScheduleService {
                     .setCurrentNavigationPointId(ship.getNextNavigationPointId());
             case FREE -> {
             }
-            default -> throw new OutOfMemoryError();
+            default -> throw new IllegalStateException();
         }
     }
 
@@ -363,8 +331,6 @@ public class ScheduleService {
 
             convoyRequest.setIcebreaker(fastestIcebreaker);
             fastestIcebreaker.getConvoyRequests().add(convoyRequest);
-//            log.info("Icebreaker {} assigned to request {}", context.ships().get(fastestIcebreaker.getShipId()),
-//                    convoyRequest);
         }
     }
 
@@ -418,18 +384,13 @@ public class ScheduleService {
                 .filter(s -> !s.isIcebreaker())
                 .toList();
         for (ScheduledShip freeShip : freeShips) {
-//            if (freeShip.getShipId() == 40L) {
-//                System.out.println(freeShip);
-//            }
             List<RoutePredictionSegment> prediction = predictRoute(freeShip);
             if (prediction == null) {
-//                log.info("Ship {} is stuck", context.ships().get(freeShip.getShipId()).name());
                 freeShip.setStatus(ScheduleStatus.STUCK);
                 freeShip.setActionEndEta(Instant.MAX);
                 continue;
             }
             if (prediction.isEmpty()) {
-//                log.info("Ship {} has arrived", context.ships().get(freeShip.getShipId()).name());
                 freeShip.setStatus(ScheduleStatus.ARRIVED);
                 freeShip.setActionEndEta(Instant.MAX);
                 continue;
@@ -456,10 +417,6 @@ public class ScheduleService {
                 }
             }
         }
-    }
-
-    private static LocalDateTime asLDT(Instant instant) {
-        return instant.atOffset(ZoneOffset.UTC).toLocalDateTime();
     }
 
     private List<RoutePredictionSegment> predictRoute(ScheduledShip scheduledShip) {

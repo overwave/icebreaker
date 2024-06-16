@@ -9,8 +9,8 @@ public record NavigationRequestPendingDto(
         RequestStatus status,
         long shipId,
         String shipName,
-        //"Arc 4, 14 узлов"
         String shipClass,
+        float speed,
         LocalDate startDate,
         long startPointId,
         String startPointName,

@@ -17,7 +17,6 @@ import dev.overwave.icebreaker.api.navigation.ShipRouteDto;
 import dev.overwave.icebreaker.api.ship.ShipDto;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.schedule.ContextHolder;
-import dev.overwave.icebreaker.core.schedule.ScheduleService;
 import dev.overwave.icebreaker.core.schedule.ShipRouteEntity;
 import dev.overwave.icebreaker.core.schedule.ShipRouteMapper;
 import dev.overwave.icebreaker.core.schedule.ShipRouteRepository;
@@ -50,7 +49,6 @@ public class NavigationRequestService {
     private final ShipRouteRepository shipRouteRepository;
     private final NavigationPointRepository navigationPointRepository;
     private final UserRepository userRepository;
-    private final ScheduleService scheduleService;
     private final ObjectMapper objectMapper;
     private final ShipRouteMapper shipRouteMapper;
     private final ContextHolder contextHolder;

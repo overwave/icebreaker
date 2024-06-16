@@ -8,13 +8,9 @@ import dev.overwave.icebreaker.core.graph.Graph;
 import dev.overwave.icebreaker.core.navigation.NavigationPointMapper;
 import dev.overwave.icebreaker.core.navigation.NavigationPointRepository;
 import dev.overwave.icebreaker.core.navigation.NavigationPointStatic;
-import dev.overwave.icebreaker.core.navigation.NavigationRequestMapper;
-import dev.overwave.icebreaker.core.navigation.NavigationRequestRepository;
-import dev.overwave.icebreaker.core.navigation.NavigationRequestStatic;
 import dev.overwave.icebreaker.core.navigation.NavigationRouteMapper;
 import dev.overwave.icebreaker.core.navigation.NavigationRouteRepository;
 import dev.overwave.icebreaker.core.navigation.NavigationRouteStatic;
-import dev.overwave.icebreaker.core.navigation.RequestStatus;
 import dev.overwave.icebreaker.core.route.DefaultRoute;
 import dev.overwave.icebreaker.core.route.DefaultRouteMapper;
 import dev.overwave.icebreaker.core.route.DefaultRouteRepository;
@@ -23,6 +19,7 @@ import dev.overwave.icebreaker.core.serialization.SerializationUtils;
 import dev.overwave.icebreaker.core.ship.ShipMapper;
 import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.ship.ShipStatic;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,8 +51,14 @@ public class ContextHolder {
     private final VelocityIntervalRepository velocityIntervalRepository;
     private final VelocityIntervalMapper velocityIntervalMapper;
 
-    private Graph graph;
-    private MetaRouteContext context;
+    private Graph graph = null;
+    private MetaRouteContext context = null;
+
+    @PostConstruct
+    void tryReadGraph() {
+        new Thread(this::readGraph).start();
+        new Thread(this::readContext).start();
+    }
 
     public void readGraph() {
         try {
