@@ -38,8 +38,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ContextHolder {
-    private final NavigationRequestRepository navigationRequestRepository;
-    private final NavigationRequestMapper navigationRequestMapper;
 
     private final NavigationPointRepository navigationPointRepository;
     private final NavigationPointMapper navigationPointMapper;
@@ -76,10 +74,6 @@ public class ContextHolder {
     @Transactional
     public synchronized void readContext() {
         log.info("Context reading...");
-        Map<Long, NavigationRequestStatic> requests =
-                navigationRequestRepository.findAllByStatus(RequestStatus.PENDING).stream()
-                        .map(navigationRequestMapper::toNavigationRequestStatic)
-                        .collect(Collectors.toMap(NavigationRequestStatic::id, nr -> nr));
         Map<Long, NavigationPointStatic> points = navigationPointRepository.findAll().stream()
                 .map(navigationPointMapper::toNavigationPointStatic)
                 .collect(Collectors.toMap(NavigationPointStatic::id, np -> np));
@@ -99,7 +93,7 @@ public class ContextHolder {
                 .map(velocityIntervalMapper::toVelocityIntervalStatic)
                 .collect(Collectors.toMap(VelocityIntervalStatic::id, s -> s, (s1, s2) -> s1, LinkedHashMap::new));
 
-        context = new MetaRouteContext(ships, requests, points, routes, defaultRouteByRouteId, velocities);
+        context = new MetaRouteContext(ships, Map.of(), points, routes, defaultRouteByRouteId, velocities);
         log.info("Context read successfully");
     }
 

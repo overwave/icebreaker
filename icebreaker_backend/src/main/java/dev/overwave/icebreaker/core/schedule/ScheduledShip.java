@@ -15,6 +15,7 @@ import java.util.List;
 @EqualsAndHashCode(of = "shipId")
 public class ScheduledShip {
     private long shipId;
+    private long requestId;
     private long currentNavigationPointId;
     private ScheduleStatus status;
     private boolean icebreaker;

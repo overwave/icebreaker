@@ -5,23 +5,21 @@ import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.VelocityIntervalStatic;
-import dev.overwave.icebreaker.core.map.Mercator;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.NavigationPointStatic;
+import dev.overwave.icebreaker.core.navigation.NavigationRequestMapper;
+import dev.overwave.icebreaker.core.navigation.NavigationRequestRepository;
+import dev.overwave.icebreaker.core.navigation.NavigationRequestStatic;
+import dev.overwave.icebreaker.core.navigation.RequestStatus;
 import dev.overwave.icebreaker.core.route.Route;
 import dev.overwave.icebreaker.core.route.Router;
 import dev.overwave.icebreaker.core.schedule.ConfirmedRouteSegment.ConfirmedRouteSegmentBuilder;
 import dev.overwave.icebreaker.core.ship.ShipStatic;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -32,15 +30,12 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.util.Objects.requireNonNull;
 
 @Slf4j
 @Service
@@ -50,6 +45,10 @@ public class ScheduleService {
     private final ShipRouteMapper shipRouteMapper;
 
     private final IcebreakerLocationRepository icebreakerLocationRepository;
+    private final NavigationRequestRepository navigationRequestRepository;
+    private final NavigationRequestMapper navigationRequestMapper;
+    private final ShipRouteRepository shipRouteRepository;
+    private final ShipRouteService shipRouteService;
     private final MetaRouter metaRouter;
 
     @PostConstruct
@@ -74,7 +73,12 @@ public class ScheduleService {
                         .build())
                 .forEach(ships::add);
 
-        context.requests().values().stream()
+        Map<Long, NavigationRequestStatic> requests =
+                navigationRequestRepository.findAll().stream()
+                        .filter(nr -> nr.getStatus() != RequestStatus.REJECTED)
+                        .map(navigationRequestMapper::toNavigationRequestStatic)
+                        .collect(Collectors.toMap(NavigationRequestStatic::id, nr -> nr));
+        requests.values().stream()
                 .map(nr -> ScheduledShip.builder()
                         .shipId(nr.shipId())
                         .currentNavigationPointId(nr.startPointId())
@@ -108,6 +112,8 @@ public class ScheduleService {
     }
 
     public void createSchedule() {
+        shipRouteRepository.deleteAll();
+
         Instant now = Instant.EPOCH;
         List<ScheduledShip> ships = new ArrayList<>(); // priority queue by action end eta?
         List<ConvoyRequest> convoyRequests = new ArrayList<>();
@@ -125,11 +131,17 @@ public class ScheduleService {
                         .build())
                 .forEach(ships::add);
 
-        MetaRouteContext context = contextHolder.context();
-        context.requests().values().stream()
-//                .limit(4)
+        Map<Long, NavigationRequestStatic> requests =
+                navigationRequestRepository.findAll().stream()
+                        .filter(nr -> nr.getStatus() != RequestStatus.REJECTED)
+                        .map(navigationRequestMapper::toNavigationRequestStatic)
+                        .collect(Collectors.toMap(NavigationRequestStatic::id, nr -> nr));
+        requests.values().stream()
+                .filter(r -> r.startDate().isBefore(Instant.parse("2024-05-01T12:00:00Z")))
+//                .limit(6)
                 .map(nr -> ScheduledShip.builder()
                         .shipId(nr.shipId())
+                        .requestId(nr.id())
                         .currentNavigationPointId(nr.startPointId())
                         .status(ScheduleStatus.WAITING)
                         .icebreaker(false)
@@ -142,66 +154,13 @@ public class ScheduleService {
 
         while (areMovingShips(ships)) {
             predictFullRoutes(ships, convoyRequests);
-//            drawConvoyRequests(convoyRequests, context);
             assignIcebreakers(ships, convoyRequests);
 
             now = updateTime(now, ships);
             convoyRequests.clear();
             ships.forEach(s -> s.getConvoyRequests().clear());
         }
-        for (ScheduledShip ship : ships) {
-            for (ConfirmedRouteSegment segment : ship.getRouteSegments()) {
-                StringBuilder builder = new StringBuilder();
-                builder.append(context.ships().get(ship.getShipId()).name())
-                        .append(" плывёт из ")
-                        .append(segment.from().name())
-                        .append(" в ")
-                        .append(segment.to().name())
-                        .append(" ")
-                        .append(segment.interval().start())
-                        .append(" -> ")
-                        .append(segment.interval().end());
-                if (segment.convoy()) {
-                    builder.append(" с кораблём ")
-                            .append(segment.otherShips().getFirst().name());
-                }
-                log.info(builder.toString());
-            }
-        }
-    }
-
-    @SneakyThrows
-    private void drawConvoyRequests(List<ConvoyRequest> convoyRequests, MetaRouteContext context) {
-        if (true) return;
-        convoyRequests.sort(Comparator.comparing(cr -> cr.getRouteSegment().interval().start()));
-        for (int i = 1; i <= convoyRequests.size(); i++) {
-            BufferedImage image = ImageIO.read(requireNonNull(this.getClass().getResourceAsStream("/mercator.png")));
-            Graphics2D graphics = image.createGraphics();
-            graphics.setStroke(new BasicStroke(3));
-            graphics.setColor(Color.BLACK);
-            for (int j = 0; j < i; j++) {
-                ConvoyRequest convoyRequest = convoyRequests.get(j);
-
-                Point from = convoyRequest.getRouteSegment().from().point();
-                Point to = convoyRequest.getRouteSegment().to().point();
-
-                Entry<Double, Double> pointLeft = Mercator.pointToMercatorNormalized(from);
-                Entry<Double, Double> pointRight = Mercator.pointToMercatorNormalized(to);
-                graphics.drawLine(
-                        (int) (pointLeft.getKey() * image.getWidth()),
-                        (int) (pointLeft.getValue() * image.getHeight()),
-                        (int) (pointRight.getKey() * image.getWidth()),
-                        (int) (pointRight.getValue() * image.getHeight())
-                );
-                String date = "%s-%s".formatted(asLDT(convoyRequest.getRouteSegment().interval().start()),
-                        asLDT(convoyRequest.getRouteSegment().interval().end()));
-                graphics.drawString(date,
-                        (int) (pointLeft.getKey() * image.getWidth()),
-                        (int) (pointLeft.getValue() * image.getHeight()));
-            }
-            image = image.getSubimage(3158, 66, 3147, 3203);
-            ImageIO.write(image, "PNG", new File("raspisanie_" + i + ".png"));
-        }
+        shipRouteService.saveRoutes(ships);
     }
 
     private boolean areMovingShips(List<ScheduledShip> ships) {
@@ -235,9 +194,16 @@ public class ScheduleService {
             nextTick = now.plus(Duration.ofMinutes(1));
         }
         for (ScheduledShip ship : ships) {
+//            if (nextTick.isAfter(ship.getActionEndEta())) {
+// плохо!
+//                System.out.println(ship);
+//            }
             if (!nextTick.isBefore(ship.getActionEndEta())) {
                 processTickAfter(ship, nextTick);
             }
+        }
+        if (nextTick.equals(Instant.parse("2024-04-28T00:00:00Z"))) {
+            System.out.println(nextTick);
         }
         return nextTick;
     }
@@ -299,6 +265,8 @@ public class ScheduleService {
             // не смогли построить маршрут???
 //            log.error("Processing tick for {}, status {} -> {}", context.ships().get(follower.getShipId()),
 //                    ScheduleStatus.READY_TO_CONVOY, ScheduleStatus.READY_TO_CONVOY);
+            Router.createRoute(nodes.get(from.point()), nodes.get(to.point()), now,
+                    context.ships().get(follower.getShipId()), MovementType.FOLLOWING, Duration.ZERO);
             return;
         }
         Route route = routeO.get();
@@ -329,8 +297,9 @@ public class ScheduleService {
     }
 
     private void processTickAfter(ScheduledShip ship, Instant now) {
+        ship.setActionEndEta(now);
         switch (ship.getStatus()) {
-            case WAITING, READY_TO_FOLLOW -> {
+            case WAITING, READY_TO_FOLLOW, READY_TO_CONVOY -> {
                 ship.setStatus(ScheduleStatus.FREE);
                 if (ship.isIcebreaker()) {
                     ship.setFinishNavigationPointId(null);
@@ -338,7 +307,8 @@ public class ScheduleService {
             }
             case MOVING -> ship.setStatus(ScheduleStatus.FREE)
                     .setCurrentNavigationPointId(ship.getNextNavigationPointId());
-            case FREE -> ship.setActionEndEta(now);
+            case FREE -> {
+            }
             default -> throw new OutOfMemoryError();
         }
     }
@@ -448,6 +418,9 @@ public class ScheduleService {
                 .filter(s -> !s.isIcebreaker())
                 .toList();
         for (ScheduledShip freeShip : freeShips) {
+//            if (freeShip.getShipId() == 40L) {
+//                System.out.println(freeShip);
+//            }
             List<RoutePredictionSegment> prediction = predictRoute(freeShip);
             if (prediction == null) {
 //                log.info("Ship {} is stuck", context.ships().get(freeShip.getShipId()).name());
