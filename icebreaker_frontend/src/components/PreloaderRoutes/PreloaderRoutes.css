@@ -1,0 +1,72 @@
+@keyframes spinner {
+  from {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.preloader-routes {
+  background-color: rgba(29, 34, 42, 0.4);
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preloader-routes__container {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 592px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.preloader-routes__round {
+  background: url(/src/images/spinner.png) no-repeat;
+  background-size: 100%;
+  width: 72px;
+  height: 72px;
+  animation-name: spinner;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.preloader-routes__title {
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.12;
+  text-align: center;
+  margin: 32px 0 20px;
+}
+
+.preloader-routes__text {
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+  color: #525760;
+  margin: 0 0 5px;
+}
+
+.preloader-routes__text:last-child {
+  margin-bottom: 0;
+}

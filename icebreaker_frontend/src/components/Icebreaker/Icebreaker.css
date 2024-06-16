@@ -1,0 +1,107 @@
+.icebreaker {
+  padding: 16px;
+  background-color: #eaecf0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.icebreaker__icebreaker {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.icebreaker__img {
+  width: 131px;
+  height: 70px;
+  background-size: 100%;
+  background-repeat: no-repeat;
+  margin-right: 12px;
+}
+
+.icebreaker__img-48 {
+  background-image: url(/src/images/icebreakers/icebreaker-1.png);
+}
+
+.icebreaker__img-49 {
+  background-image: url(/src/images/icebreakers/icebreaker-2.png);
+}
+
+.icebreaker__img-50 {
+  background-image: url(/src/images/icebreakers/icebreaker-3.png);
+}
+
+.icebreaker__img-51 {
+  background-image: url(/src/images/icebreakers/icebreaker-4.png);
+}
+
+.icebreaker__name {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.25;
+  margin: 0 0 4px;
+}
+
+.icebreaker__description {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.23;
+  color: #80858e;
+  margin: 0;
+}
+
+.icebreaker__routes {
+  margin-bottom: 12px;
+}
+
+.icebreaker__routes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.icebreaker__btn {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.25;
+  border: none;
+  background-color: transparent;
+  padding: 2px 20px 2px 0;
+  background-image: url(/src/images/arrow-bold-down.svg);
+  background-repeat: no-repeat;
+  background-size: 12px 8px;
+  background-position: right center;
+  cursor: pointer;
+}
+
+.icebreaker__btn_opened {
+  background-image: url(/src/images/arrow-bold-up.svg);
+}
+
+.icebreaker__download {
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.icebreaker__download-img {
+  width: 100%;
+}
+
+.icebreaker__routes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.icebreaker__archive-error {
+  padding: 16px;
+  text-align: center;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.23;
+}

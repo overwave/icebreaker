@@ -1,0 +1,21 @@
+.parking {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.parking__point {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.23;
+  margin: 0 0 4px;
+}
+
+.parking__dates {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.23;
+  color: #80858e;
+  margin: 0;
+}

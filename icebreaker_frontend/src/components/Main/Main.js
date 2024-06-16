@@ -1,27 +1,91 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Maps from "../Maps/Maps";
 import "./Main.css";
 import Applications from "../Applications/Applications";
+import { CurrentUserContext } from "../../contexts/CurrentUserContext";
+import MyCalendar from "../MyCalendar/MyCalendar";
+import AdminApplications from "../AdminApplications/AdminApplications";
 
-export default function Main({ getNavigationPoints, navPoints, getShips }) {
+export default function Main({
+  getNavigationPoints,
+  navPoints,
+  getAllApplications,
+  applicationsPoints,
+  allApplications,
+  setIsPopupNewApplication,
+  addZero,
+  setInfoShip,
+  shipRoute,
+  getShipRoute,
+  getAllIcebreaker,
+  allIcebreakers,
+  setNewRouteList,
+  getGantt,
+  getIceGantt,
+  getIceRoute,
+  iceRoute,
+  idIcebreaker,
+}) {
+  const [shipGeo, setShipGeo] = useState(0);
+  const currentUser = useContext(CurrentUserContext);
 
-    const [shipGeo, setShipGeo] = useState(0);
+  useEffect(() => {
+    getAllApplications();
+    getNavigationPoints();
+  }, []);
 
-    useEffect(() => {
-        getNavigationPoints();
-    }, []);
+  return (
+    <section
+      className={`main ${
+        currentUser.currentUser.role === "ADMIN" ? "main_admin" : ""
+      }`}
+    >
+      {currentUser.currentUser.role === "CAPTAIN" && (
+        <Applications
+          applicationsPoints={applicationsPoints}
+          allApplications={allApplications}
+          setIsPopupNewApplication={setIsPopupNewApplication}
+          getShipRoute={getShipRoute}
+          setInfoShip={setInfoShip}
+          getGantt={getGantt}
+        />
+      )}
 
-    function change(e) {
-        setShipGeo(Number(e.target.value));
-    }
+      {currentUser.currentUser.role === "ADMIN" && (
+        <AdminApplications
+          applicationsPoints={applicationsPoints}
+          allApplications={allApplications}
+          setInfoShip={setInfoShip}
+          getShipRoute={getShipRoute}
+          getAllIcebreaker={getAllIcebreaker}
+          allIcebreakers={allIcebreakers}
+          setNewRouteList={setNewRouteList}
+          getGantt={getGantt}
+          getIceGantt={getIceGantt}
+          getIceRoute={getIceRoute}
+          idIcebreaker={idIcebreaker}
+        />
+      )}
 
-    return (
-        <section className="main">
-            <Maps navPoints={navPoints} shipGeo={shipGeo} />
-            <div className="main__calendar">
-                <input className="main__input" type="range" min="0" max="3" value={shipGeo} onChange={change} />
-            </div>
-            <Applications getShips={getShips} />
-        </section>
-    );
+      <div className="main__maps">
+        <Maps
+          navPoints={navPoints}
+          shipGeo={shipGeo}
+          shipRoute={shipRoute}
+          iceRoute={iceRoute}
+          idIcebreaker={idIcebreaker}
+        />
+      </div>
+
+      <div className="main__time">
+        <MyCalendar
+          addZero={addZero}
+          shipRoute={shipRoute}
+          iceRoute={iceRoute}
+          shipGeo={shipGeo}
+          setShipGeo={setShipGeo}
+        />
+      </div>
+    </section>
+  );
 }

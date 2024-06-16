@@ -1,0 +1,122 @@
+.calendar {
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.calendar-linear {
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.calendar-linear__block {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: flex;
+  width: calc(100% - 80px);
+  margin-left: 40px;
+}
+
+.calendar-linear__block::-webkit-scrollbar {
+  display: none;
+}
+
+.calendar-linear__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: flex-end;
+  width: max-content;
+  transition: all 0.5s ease-in-out;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+.calendar-linear__item {
+  padding-right: 30px;
+  position: relative;
+}
+
+.calendar-linear__title {
+  margin: 0 0 5px;
+  font-size: 10px;
+  line-height: 14px;
+  color: rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  position: sticky;
+  left: 0px;
+  transition: left 0.2s linear;
+}
+
+.calendar-linear__dates {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.calendar-linear__date {
+  border: 1px solid #ccc;
+  padding: 10px;
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.calendar-linear__date:not(:last-child) {
+  border-right: 0;
+}
+
+.calendar-linear__date:hover,
+.calendar-linear__date_active {
+  background-color: #ccc;
+}
+
+.calendar-linear__day {
+  display: block;
+}
+
+.calendar-linear__arrow {
+  position: absolute;
+  bottom: 0;
+  background: url(../../images/arrow-left.svg) no-repeat 100%;
+  border: 0;
+  width: 40px;
+  height: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f6f8;
+  background-position: center center;
+  padding: 0;
+  border-right: 1px solid #d4d5d9;
+}
+
+.calendar-linear__arrow_name_left {
+  left: 0;
+}
+
+.calendar-linear__arrow_name_right {
+  right: 0;
+  transform: rotate(180deg);
+}
+
+.calendar-linear__arrow:disabled {
+  cursor: default;
+  background-color: #d4d5d9;
+}
+
+.calendar-linear__btn {
+  cursor: pointer;
+  white-space: nowrap;
+}

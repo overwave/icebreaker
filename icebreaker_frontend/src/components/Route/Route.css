@@ -1,0 +1,94 @@
+.route {
+  margin-top: 12px;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: default;
+}
+
+.route__block {
+  display: flex;
+  justify-content: space-between;
+}
+
+.route__point {
+  width: max-content;
+  max-width: calc(50% - 20px);
+  min-width: 85px;
+}
+
+.route__point:last-child {
+  text-align: right;
+}
+
+.route__point-name {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.23;
+  margin-bottom: 4px;
+  display: block;
+  max-width: 100%;
+}
+
+.route__point-date {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.23;
+  color: #80858e;
+  white-space: nowrap;
+}
+
+.route__arrow {
+  width: 100%;
+  height: 18px;
+  margin: 0 8px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  position: relative;
+  min-width: 20px;
+}
+
+.route__arrow::before {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 5px;
+  background-color: #4480f3;
+  border-radius: 50%;
+  position: absolute;
+  left: 0;
+}
+
+.route__arrow-img {
+  object-fit: cover;
+  position: absolute;
+  right: 0;
+}
+
+.route__icebreaker {
+  margin-top: 16px;
+}
+
+.route__icebreaker-title {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.25;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+}
+
+.route__icebreaker-icon {
+  width: 20px;
+  margin-right: 4px;
+}
+
+.route__icebreaker-class {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.23;
+  color: #80858e;
+  margin: 0;
+}

@@ -35,7 +35,6 @@
   font-size: 32px;
   line-height: 1.12;
   text-align: center;
-  color: #1D222A;
   margin: 0 0 32px;
 }
 
@@ -50,7 +49,7 @@
   font-weight: 500;
   font-size: 16px;
   line-height: 1.25;
-  color: #80858E;
+  color: #80858e;
   position: absolute;
   top: 10px;
   left: 16px;
@@ -80,23 +79,23 @@
 }
 
 .auth__input::placeholder {
-  color: #80858E !important;
+  color: #80858e !important;
 }
 
 .auth__input::-webkit-input-placeholder {
-  color: #80858E !important;
+  color: #80858e !important;
 }
 
 .auth__input::-moz-placeholder {
-  color: #80858E !important;
+  color: #80858e !important;
 }
 
 .auth__input:-moz-placeholder {
-  color: #80858E !important;
+  color: #80858e !important;
 }
 
 .auth__input:-ms-input-placeholder {
-  color: #80858E !important;
+  color: #80858e !important;
 }
 
 .auth__input_active {
@@ -108,14 +107,14 @@
 }
 
 .auth__input:focus {
-  color: #1D222A;
+  color: #1d222a;
 }
 
 .auth__input-error {
   font-weight: 400;
   font-size: 13px;
   line-height: 1.23;
-  color: #E35454;
+  color: #e35454;
   display: block;
   position: absolute;
   bottom: -16px;
@@ -123,7 +122,7 @@
 }
 
 .auth__btn {
-  background-color: #4480F3;
+  background-color: #4480f3;
   border-radius: 8px;
   border: none;
   padding: 10px;
@@ -136,15 +135,15 @@
   font-weight: 500;
   font-size: 16px;
   line-height: 1.25;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .auth__btn:not(.auth__btn_disabled):hover {
-  background-color: #578DF4;
+  background-color: #578df4;
 }
 
 .auth__btn_disabled {
-  opacity: .32;
+  opacity: 0.32;
   cursor: default;
 }
 
@@ -154,7 +153,7 @@
   font-weight: 400;
   font-size: 13px;
   line-height: 1.23;
-  color: #E35454;
+  color: #e35454;
   margin-bottom: 12px;
   display: block;
 }
@@ -169,13 +168,13 @@
 }
 
 .auth__link {
-  color: #4480F3;
+  color: #4480f3;
   text-decoration: none;
   transition: 0.1s ease-in-out;
 }
 
 .auth__link:hover {
-  color: #578DF4;
+  color: #578df4;
 }
 
 .auth__eye {
@@ -194,7 +193,7 @@
   width: 100%;
 }
 
-@media screen and (max-width:1200px) {
+@media screen and (max-width: 1200px) {
   .auth__form {
     margin-left: 40px;
   }

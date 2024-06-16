@@ -4,14 +4,31 @@
 
 body {
   font-family: "Golos", Arial, Helvetica, sans-serif;
-  color: #1D222A;
+  color: #1d222a;
   font-weight: 400;
+  scrollbar-width: thin;
+  scrollbar-color: #d4d5d9 transparent;
+}
+
+body::-webkit-scrollbar {
+  width: 4px;
+}
+
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body::-webkit-scrollbar-thumb {
+  background-color: #d4d5d9;
+  border-radius: 2px;
+  border: 0;
 }
 
 .page {
   min-height: 100vh;
-  height: max-content;
+  height: 100vh;
   position: relative;
+  overflow: hidden;
 }
 
 .content {
@@ -26,21 +43,225 @@ body {
   margin: 0 auto;
 }
 
-.content__info-block {
+.content__btn {
+  padding: 10px 16px;
+  background-color: #4480f3;
+  border: none;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.25;
+  color: #ffffff;
+  border-radius: 8px;
+  transition: 0.1s ease-in-out;
+  cursor: pointer;
   width: 100%;
-  max-width: 1200px;
-  box-sizing: border-box;
-  margin: 0 auto;
-  padding: 130px 30px;
+  opacity: 1;
+  text-align: center;
 }
 
-.content__info-text {
-  margin: 0;
+.content__btn:not(.content__btn_disabled):hover {
+  background-color: #578df4;
+}
+
+.content__btn:active,
+.content__btn:focus {
+  background-color: #3173f2;
+}
+
+.content__btn_disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.content__btn_secondary,
+.content__btn_secondary:hover {
+  padding: 10px 16px;
+  border: none;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.25;
+  border-radius: 8px;
+  transition: 0.1s ease-in-out;
+  cursor: pointer;
+  width: 100%;
+  opacity: 1;
   text-align: center;
-  font-family: "Inter", Arial, Helvetica, sans-serif;
+  background-color: rgba(68, 128, 243, 0.12);
+  color: #4480f3;
+}
+
+.content__btn_secondary:active,
+.content__btn_secondary:focus {
+  background-color: rgba(68, 128, 243, 0.16);
+}
+
+/* Form */
+
+.form__field {
+  position: relative;
+  width: 100%;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.form__double-field {
+  position: relative;
+  width: 100%;
+  margin-bottom: 24px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 32px;
+}
+
+.form__label {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.25;
+  color: #80858e;
+  position: absolute;
+  top: 10px;
+  left: 16px;
+}
+
+.form__label_active {
+  font-size: 13px;
+  line-height: 1.23;
+  top: 2px;
+}
+
+.form__label:focus {
+  color: #525760;
+}
+
+.form__input {
+  width: 100%;
+  outline: none;
+  background-color: rgba(212, 213, 217, 0.32);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.25;
+  color: #525760;
+  border: none;
+}
+
+.form__input::placeholder {
+  color: #80858e !important;
+}
+
+.form__input::-webkit-input-placeholder {
+  color: #80858e !important;
+}
+
+.form__input::-moz-placeholder {
+  color: #80858e !important;
+}
+
+.form__input:-moz-placeholder {
+  color: #80858e !important;
+}
+
+.form__input:-ms-input-placeholder {
+  color: #80858e !important;
+}
+
+.form__input_active {
+  padding: 18px 16px 2px;
+}
+
+.form__input_error {
+  background-color: rgba(251, 152, 152, 0.16);
+}
+
+.form__input:focus {
+  color: #1d222a;
+}
+
+.form__input-error {
   font-weight: 400;
-  font-size: 18px;
-  line-height: 1.11;
-  color: #a0a0a0;
-  padding: 50px 0;
+  font-size: 13px;
+  line-height: 1.23;
+  color: #e35454;
+  display: block;
+  position: absolute;
+  bottom: -16px;
+  left: 16px;
+}
+
+.form__error {
+  width: 100%;
+  text-align: center;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.23;
+  color: #e35454;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.form__text {
+  text-align: center;
+  margin: 0;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.25;
+  color: #525760;
+}
+
+.form__link {
+  color: #4480f3;
+  text-decoration: none;
+  transition: 0.1s ease-in-out;
+}
+
+.form__link:hover {
+  color: #578df4;
+}
+
+.form__eye {
+  background-color: transparent;
+  border: none;
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.form__eye-icon {
+  width: 100%;
+}
+
+.form__calendar-icon {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  cursor: pointer;
+}
+
+.form__calendar {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: #fff;
+  z-index: 10;
+}
+
+.form__btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 16px;
+  margin-top: 32px;
+}
+
+/* calendar */
+
+.form__calendar {
+  box-shadow: 0px 8px 32px 0px rgba(12, 16, 24, 0.12) !important;
+  background-color: #ffffff !important;
+  border: none !important;
 }
