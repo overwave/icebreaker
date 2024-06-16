@@ -84,28 +84,28 @@ public class Router {
 
     private static List<Point> normalizeRoutePoints(List<Node> nodes, Map<Node, RouteSegment> routeSegments) {
         List<Point> normalizedPoints = new ArrayList<>();
-        int durationToCursor = 0;
-        normalizedPoints.add(nodes.getFirst().coordinates());
-        for (int i = 0; i < nodes.size(); i++) {
-            Node currentNode = nodes.get(i);
-            int currentDuration = routeSegments.get(currentNode).durationMinutes();
-            int durationToCursorWithInterval = durationToCursor + ONE_HOUR_IN_MIN;
-            if (currentDuration < durationToCursorWithInterval) {
-                continue;
-            } else if (currentDuration == durationToCursorWithInterval) {
-                normalizedPoints.add(currentNode.coordinates());
-            } else {
-                Node prevNode = nodes.get(i - 1);
-                int durationBetweenCurrentAndPrev = currentDuration - routeSegments.get(prevNode).durationMinutes();
-                int partOfSegment = currentDuration - durationToCursorWithInterval;
-                Point point = GeometryUtils.findPointInPartOfSegment(currentNode.coordinates(), prevNode.coordinates(),
-                        partOfSegment / (float) durationBetweenCurrentAndPrev);
+        Point from = nodes.getFirst().coordinates();
+        long time = routeSegments.get(nodes.getFirst()).durationMinutes() - ONE_HOUR_IN_MIN;
+
+        for (int i = 0, nodesSize = nodes.size(); i < nodesSize; ) {
+            Node node = nodes.get(i);
+            RouteSegment routeSegment = routeSegments.get(node);
+            if (routeSegment.durationMinutes() > time + ONE_HOUR_IN_MIN) {
+                float difference = routeSegment.durationMinutes() - time;
+                Point point = GeometryUtils.findPointInPartOfSegment(from, node.coordinates(),
+                         ONE_HOUR_IN_MIN / difference);
+                from = point;
                 normalizedPoints.add(point);
+                time += ONE_HOUR_IN_MIN;
+            } else if (routeSegment.durationMinutes() == time + ONE_HOUR_IN_MIN) {
+                normalizedPoints.add(node.coordinates());
+                from = node.coordinates();
+                i++;
+                time += ONE_HOUR_IN_MIN;
+            } else {
+                from = node.coordinates();
+                i++;
             }
-            durationToCursor = durationToCursorWithInterval;
-        }
-        if(!normalizedPoints.contains(nodes.getLast().coordinates())) {
-            normalizedPoints.add(nodes.getLast().coordinates());
         }
         return normalizedPoints;
     }
