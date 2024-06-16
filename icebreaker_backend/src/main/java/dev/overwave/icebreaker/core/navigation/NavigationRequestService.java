@@ -15,7 +15,9 @@ import dev.overwave.icebreaker.api.navigation.PointAndTimestamp;
 import dev.overwave.icebreaker.api.navigation.RouteSegmentDto;
 import dev.overwave.icebreaker.api.navigation.ShipRouteDto;
 import dev.overwave.icebreaker.api.ship.ShipDto;
+import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Point;
+import dev.overwave.icebreaker.core.geospatial.VelocityIntervalStatic;
 import dev.overwave.icebreaker.core.schedule.ContextHolder;
 import dev.overwave.icebreaker.core.schedule.ShipRouteEntity;
 import dev.overwave.icebreaker.core.schedule.ShipRouteMapper;
@@ -147,6 +149,16 @@ public class NavigationRequestService {
         return navigationRequestMapper.toNavigationRequestDto(saved);
     }
 
+    private LocalDate getIceFlotationData(Instant instant) {
+        List<Interval> intervals = contextHolder.context().velocities().values().stream()
+                .map(VelocityIntervalStatic::interval).toList();
+        if (instant.isBefore(intervals.getFirst().start())) {
+            return asLD(intervals.getFirst().start());
+        }
+        Interval interval = intervals.stream().filter(i -> i.contains(instant)).findFirst().orElse(intervals.getLast());
+        return asLD(interval.start());
+    }
+
     public List<ShipRouteDto> getShipRouteByRequestId(long navigationRequestId) {
         List<ShipRouteEntity> routeSegments =
                 shipRouteRepository.findAllByNavigationRequestIdOrderById(navigationRequestId);
@@ -159,6 +171,7 @@ public class NavigationRequestService {
             List<Long> companions = getCompanions(routeSegment);
             ShipRouteDto route = ShipRouteDto.builder().id(routeSegment.getId())
                     .convoy(!companions.isEmpty())
+                    .iceFlotationData(getIceFlotationData(routeSegment.getStartDate()))
                     .icebreaker(companions.stream().findFirst().map(String::valueOf).orElse(""))
                     .routes(getHourlyPoints(routeSegment, previousRouteEpoch))
                     .build();
@@ -259,6 +272,7 @@ public class NavigationRequestService {
                         .id(routeSegment.getId())
                         .isParking(isWaiting(routeSegment))
                         .ships(!getCompanions(routeSegment).isEmpty())
+                        .iceFlotationData(getIceFlotationData(routeSegment.getStartDate()))
                         .routes(getIcebreakerPoints(routeSegment))
                         .build())
                 .toList();
