@@ -3,8 +3,6 @@ package dev.overwave.icebreaker.core.navigation;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestPendingDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestToSaveDto;
-import dev.overwave.icebreaker.api.navigation.NavigationRequestWithRouteDto;
-import dev.overwave.icebreaker.api.navigation.RouteSegmentDto;
 import dev.overwave.icebreaker.core.ship.Ship;
 import org.springframework.stereotype.Component;
 
@@ -12,26 +10,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
-import java.util.List;
 
 @Component
 public class NavigationRequestMapper {
-
-    //метод-заглушка
-    public RouteSegmentDto toRouteSegmentDto(NavigationRequest navigationRequest, Instant finishDate,
-                                             Ship icebreaker) {
-        return new RouteSegmentDto(
-                1L,
-                instantToLocalDate(navigationRequest.getStartDate()),
-                navigationRequest.getStartPoint().getId(),
-                navigationRequest.getStartPoint().getName(),
-                instantToLocalDate(finishDate),
-                navigationRequest.getFinishPoint().getId(),
-                navigationRequest.getFinishPoint().getName(),
-                icebreaker.getName(),
-                getShipClassDescription(icebreaker));
-
-    }
 
     public NavigationRequestPendingDto toNavigationRequestPendingDto(NavigationRequest navigationRequest) {
         Ship ship = navigationRequest.getShip();
@@ -40,30 +21,12 @@ public class NavigationRequestMapper {
                 navigationRequest.getStatus(),
                 ship.getId(),
                 ship.getName(),
-                getShipClassDescription(ship),
+                ship.getIceClass().name(),
                 instantToLocalDate(navigationRequest.getStartDate()),
                 navigationRequest.getStartPoint().getId(),
                 navigationRequest.getStartPoint().getName(),
                 navigationRequest.getFinishPoint().getId(),
                 navigationRequest.getFinishPoint().getName());
-    }
-
-    public NavigationRequestWithRouteDto toNavigationRequestWithRouteDto(NavigationRequest navigationRequest,
-                                                                         boolean convoy,
-                                                                         List<RouteSegmentDto> routes) {
-        Ship ship = navigationRequest.getShip();
-        return new NavigationRequestWithRouteDto(
-                navigationRequest.getId(),
-                ship.getId(),
-                ship.getName(),
-                getShipClassDescription(ship),
-                convoy,
-                routes
-        );
-    }
-
-    private String getShipClassDescription(Ship ship) {
-        return "%s, %s узлов".formatted(ship.getIceClass().getShortDescription(), ship.getSpeed());
     }
 
     public NavigationRequestDto toNavigationRequestDto(NavigationRequest navigationRequest) {
