@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.overwave.icebreaker.api.icebreaker.IcebreakerDetailDto;
 import dev.overwave.icebreaker.api.icebreaker.IcebreakerDetailListDto;
+import dev.overwave.icebreaker.api.icebreaker.IcebreakerRouteDto;
+import dev.overwave.icebreaker.api.icebreaker.IcebreakerRouteSegmentDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestPendingDto;
 import dev.overwave.icebreaker.api.navigation.NavigationRequestToSaveDto;
@@ -89,7 +91,8 @@ public class NavigationRequestService {
             List<RouteSegmentDto> routes = segments.stream()
                     .map(routeSegment -> {
                         List<Long> companions = getCompanions(routeSegment);
-                        Optional<Ship> icebreaker = companions.stream().findFirst().map(shipRepository::findByIdOrThrow);
+                        Optional<Ship> icebreaker =
+                                companions.stream().findFirst().map(shipRepository::findByIdOrThrow);
                         String icebreakerName = icebreaker.map(Ship::getName).orElse("");
                         String icebreakerClass = icebreaker.map(s -> s.getIceClass().getShortDescription()).orElse("");
                         return RouteSegmentDto.builder()
@@ -245,5 +248,34 @@ public class NavigationRequestService {
 
     private static LocalDate asLD(Instant instant) {
         return instant.atOffset(ZoneOffset.UTC).toLocalDate();
+    }
+
+    public IcebreakerRouteDto getIcebreakerRoute(long icebreakerId) {
+        List<ShipRouteEntity> routeSegments = shipRouteRepository.findAllByShipIdOrderById(icebreakerId);
+        List<IcebreakerRouteSegmentDto> segments = routeSegments.stream()
+                .map(routeSegment -> IcebreakerRouteSegmentDto.builder()
+                        .id(routeSegment.getId())
+                        .isParking(isWaiting(routeSegment))
+                        .ships(!getCompanions(routeSegment).isEmpty())
+                        .routes(getIcebreakerPoints(routeSegment))
+                        .build())
+                .toList();
+        return new IcebreakerRouteDto(segments);
+    }
+
+    private List<PointAndTimestamp> getIcebreakerPoints(ShipRouteEntity routeSegment) {
+        boolean waiting = isWaiting(routeSegment);
+        if (waiting) {
+            return List.of(new PointAndTimestamp(routeSegment.getStartPoint().getPoint(),
+                            toEpochTruncated(routeSegment.getStartDate())),
+                    new PointAndTimestamp(routeSegment.getFinishPoint().getPoint(),
+                            toEpochTruncated(routeSegment.getEndDate())));
+        }
+        List<Point> points = getPoints(routeSegment);
+        return shipRouteMapper.createPointAndTimestamp(routeSegment.getStartDate(), points);
+    }
+
+    private long toEpochTruncated(Instant instant) {
+        return instant.truncatedTo(ChronoUnit.HOURS).getEpochSecond();
     }
 }
