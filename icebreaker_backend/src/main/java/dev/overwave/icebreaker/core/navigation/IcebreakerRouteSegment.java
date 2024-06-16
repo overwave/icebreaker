@@ -1,20 +1,21 @@
-package dev.overwave.icebreaker.api.navigation;
+package dev.overwave.icebreaker.core.navigation;
 
+import dev.overwave.icebreaker.api.ship.ShipDto;
 import lombok.Builder;
 
 import java.time.LocalDate;
-
+import java.util.List;
 
 @Builder
-public record RouteSegmentDto(
+public record IcebreakerRouteSegment(
         long id,
+        boolean isParking,
         LocalDate startDate,
         long startPointId,
         String startPointName,
         LocalDate finishDate,
         long finishPointId,
         String finishPointName,
-        String icebreakerName,
-        String icebreakerClass
+        List<ShipDto> ships
 ) {
 }

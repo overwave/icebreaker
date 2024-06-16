@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface ShipRouteRepository extends JpaRepository<ShipRouteEntity, Long> {
     List<ShipRouteEntity> findAllByNavigationRequestIdOrderById(long navigationRequestId);
+
+    List<ShipRouteEntity> findAllByShipIdOrderById(long shipId);
 }
