@@ -82,7 +82,7 @@ function Register({ onSubmit, isError, errorMessage, changeOption }) {
           type="text"
           onChange={handleChange}
           value={values.login}
-          pattern="^[А-ЯЁа-яёA-Za-z\s\-]+$"
+          pattern="^[А-ЯЁа-яёA-Za-z0-9\s\-]+$"
           required
         />
         <span className="auth__input-error">{errors.login || ""}</span>
