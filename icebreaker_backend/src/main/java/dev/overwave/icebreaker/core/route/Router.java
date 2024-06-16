@@ -107,6 +107,10 @@ public class Router {
                 i++;
             }
         }
+        Point lastPoint = nodes.getLast().coordinates();
+        if(!normalizedPoints.getLast().equals(lastPoint)) {
+            normalizedPoints.add(lastPoint);
+        }
         return normalizedPoints;
     }
 
