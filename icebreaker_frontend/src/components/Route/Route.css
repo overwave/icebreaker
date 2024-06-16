@@ -28,6 +28,7 @@
   margin-bottom: 4px;
   display: block;
   max-width: 100%;
+  word-wrap: break-word;
 }
 
 .route__point-date {
@@ -39,14 +40,13 @@
 }
 
 .route__arrow {
-  width: 100%;
+  width: 30%;
   height: 18px;
   margin: 0 8px;
   display: flex;
   align-items: center;
   position: relative;
   overflow: hidden;
-  position: relative;
   min-width: 20px;
 }
 

@@ -15,6 +15,7 @@ export default function AdminApplications({
   getGantt,
   getIceGantt,
   getIceRoute,
+  idIcebreaker
 }) {
   const [selectedApplications, setSelectedApplications] = useState(
     Number(localStorage.getItem("selectedApplications"))
@@ -145,6 +146,7 @@ export default function AdminApplications({
               allIcebreakers={allIcebreakers}
               getIceGantt={getIceGantt}
               getIceRoute={getIceRoute}
+              idIcebreaker={idIcebreaker}
             />
           )}
         </div>

@@ -375,7 +375,7 @@ function App() {
         setIceRoute(res.segments);
         localStorage.setItem("iceRoute", JSON.stringify(res.segments));
 
-        //window.location.reload();
+        window.location.reload();
       })
       .catch((err) => {
         console.log(`Ошибка: ${err}`);

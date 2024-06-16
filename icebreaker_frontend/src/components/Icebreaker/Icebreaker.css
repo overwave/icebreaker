@@ -5,6 +5,10 @@
   overflow: hidden;
 }
 
+.icebreaker_active {
+  border: 2px solid #4480F3;
+}
+
 .icebreaker__icebreaker {
   display: flex;
   align-items: center;

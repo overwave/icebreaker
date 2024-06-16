@@ -10,6 +10,7 @@ export default function Icebreaker({
   setInfoShip,
   getIceGantt,
   getIceRoute,
+  idIcebreaker,
 }) {
   const [isRoutes, setIsRoutes] = useState(false);
   const [isArchive, setIsArchive] = useState(false);
@@ -31,7 +32,11 @@ export default function Icebreaker({
   }
 
   return (
-    <li className="icebreaker">
+    <li
+      className={`icebreaker ${
+        icebreaker.id === idIcebreaker ? "icebreaker_active" : ""
+      }`}
+    >
       <div className="icebreaker__icebreaker" onClick={onIceRoute}>
         <div
           className={`icebreaker__img icebreaker__img-${icebreaker.id}`}
