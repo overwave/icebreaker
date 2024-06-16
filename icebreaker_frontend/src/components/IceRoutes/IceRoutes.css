@@ -1,0 +1,12 @@
+.ice-routes {
+  padding: 4px 32px 16px;
+  overflow: auto;
+}
+
+.ice-routes__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-gap: 14px;
+}

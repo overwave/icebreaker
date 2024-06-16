@@ -1,96 +1,81 @@
 .application {
-    margin-bottom: 14px;
-    border: 1px solid #000;
-    padding: 16px;
+  margin-bottom: 12px;
+  padding: 16px;
+  background-color: #eaecf0;
+  border-radius: 12px;
 }
 
 .application:last-child {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
-.application__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+.application-agreed {
+  cursor: pointer;
+}
+
+.application_active {
+  border: 2px solid #4480f3;
+}
+
+.application__icebreaker {
+  background-color: #4480f3;
+  width: max-content;
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.23;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.application__icebreaker-icon {
+  width: 16px;
+  margin-right: 4px;
+}
+
+.application__header-block {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .application__header-left {
-    padding-right: 10px;
+  padding-right: 10px;
 }
 
 .application__title {
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 1.25;
-    color: #000000;
-    margin: 0 0 4px;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.25;
+  margin: 0 0 4px;
 }
 
 .application__points {
-    margin: 0;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 1.23;
-    color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.23;
+  color: #80858e;
 }
 
 .application__btns {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .application__btn {
-    width: 20px;
-    height: 20px;
-    border: none;
-    background-color: transparent;
-    padding: 0;
-    cursor: pointer;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background-color: transparent;
+  padding: 0;
+  cursor: pointer;
 }
 
-.application__btn_name_ship {
-    margin-right: 10px;
-}
+/* Icebreaker */
 
-.application__route {
-    margin-top: 16px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.application__point {
-    width: max-content;
-}
-
-.application__point-name {
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 1.23;
-    color: #000000;
-    margin-bottom: 8px;
-    display: block;
-    white-space: nowrap;
-}
-
-.application__point-date {
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 1.23;
-    color: rgba(0, 0, 0, 0.5);
-}
-
-.application__arrow {
-    width: 100%;
-    height: 18px;
-    margin: 0 8px;
-    display: flex;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.application__arrow-img {
-    object-fit: cover;
-    position: absolute;
-    right: 0;
+.application-icebreaker {
+  padding: 0;
 }

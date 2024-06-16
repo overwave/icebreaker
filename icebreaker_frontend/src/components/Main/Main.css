@@ -1,16 +1,36 @@
 .main {
-    position: relative;
-    height: calc(100vh - 80px);
+  position: relative;
+  height: calc(100vh - 82px);
 }
 
-.main__calendar {
-    position: absolute;
-    width: 100%;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #fff;
-    bottom: 0;
-    left: 0;
+.main_admin {
+  display: grid;
+  grid-template-columns: 476px 1fr;
+}
+
+.main__maps {
+  width: 100vw;
+  height: calc(100vh - 82px);
+}
+
+.main_admin .main__maps {
+  width: calc(100vw - 476px);
+  height: calc(100vh - 82px);
+}
+
+.main__time {
+  position: absolute;
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  bottom: 0;
+  left: 0;
+}
+
+.main_admin .main__time {
+  right: 0;
+  left: auto;
+  width: calc(100% - 476px);
 }

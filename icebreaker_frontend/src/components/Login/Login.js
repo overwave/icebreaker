@@ -43,10 +43,19 @@ function Login({ onSubmit, isError, errorMessage }) {
       errorMessage={errorMessage}
     >
       <div className="auth__field">
-        <label className={`auth__label ${values.login === "" ? "":"auth__label_active"}`} htmlFor="login">Логин</label>
+        <label
+          className={`auth__label ${
+            values.login === "" ? "" : "auth__label_active"
+          }`}
+          htmlFor="login"
+        >
+          Логин
+        </label>
         <input
           name="login"
-          className={`auth__input ${values.login === "" ? "":"auth__input_active"} ${errors.login ? "auth__input_error":""}`}
+          className={`auth__input ${
+            values.login === "" ? "" : "auth__input_active"
+          } ${errors.login ? "auth__input_error" : ""}`}
           type="text"
           onChange={handleChange}
           value={values.login}
@@ -57,18 +66,27 @@ function Login({ onSubmit, isError, errorMessage }) {
       </div>
 
       <div className="auth__field">
-        <label className={`auth__label ${values.password === "" ? "":"auth__label_active"}`} htmlFor="password">Пароль</label>
+        <label
+          className={`auth__label ${
+            values.password === "" ? "" : "auth__label_active"
+          }`}
+          htmlFor="password"
+        >
+          Пароль
+        </label>
         <input
           name="password"
-          className={`auth__input ${values.password === "" ? "":"auth__input_active"} ${errors.password ? "auth__input_error":""}`}
-          type={`${isEye ? "text":"password"}`}
+          className={`auth__input ${
+            values.password === "" ? "" : "auth__input_active"
+          } ${errors.password ? "auth__input_error" : ""}`}
+          type={`${isEye ? "text" : "password"}`}
           onChange={handleChange}
           value={values.password}
           required
         />
         <span className="auth__input-error">{errors.password || ""}</span>
         <button type="button" className="auth__eye" onClick={handleEye}>
-          <img className="auth__eye-icon" src={isEye ? eye2:eye} alt="" />
+          <img className="auth__eye-icon" src={isEye ? eye2 : eye} alt="" />
         </button>
       </div>
     </AuthForm>
