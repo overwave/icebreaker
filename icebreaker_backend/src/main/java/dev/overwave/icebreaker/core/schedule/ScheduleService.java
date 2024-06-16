@@ -106,7 +106,7 @@ public class ScheduleService {
                     context.ships().get(shipId), movementType, Duration.ZERO).orElseThrow();
 
             ScheduledShip icebreaker = ships.stream().filter(ScheduledShip::isIcebreaker).findFirst().orElseThrow();
-            routes.add(shipRouteMapper.toShipRouteDto(i, segment, route, icebreaker));
+            routes.add(shipRouteMapper.toShipRouteDto(i, segment, route));
         }
         return routes;
     }

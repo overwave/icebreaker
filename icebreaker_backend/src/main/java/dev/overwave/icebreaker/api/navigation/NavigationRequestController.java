@@ -86,6 +86,4 @@ public class NavigationRequestController {
     public List<ShipRouteDto> getShipRoutes(@RequestParam long navigationRequestId) {
         return navigationRequestService.getShipRouteByRequestId(navigationRequestId);
     }
-
-
 }

@@ -1,11 +1,14 @@
 package dev.overwave.icebreaker.api.navigation;
 
+import lombok.Builder;
+
 import java.util.List;
 
+@Builder
 public record ShipRouteDto(
         long id,
         boolean convoy,
-        Long icebreaker, // id сопровождающего ледокола
+        String icebreaker,
         List<PointAndTimestamp> routes
 ) {
 
