@@ -111,6 +111,7 @@ public class NavigationRequestService {
                     .id(request.getId())
                     .shipId(ship.getId())
                     .shipName(ship.getName())
+                    .speed(ship.getSpeed())
                     .shipClass(ship.getIceClass().name())
                     .convoy(convoy)
                     .routes(routes)

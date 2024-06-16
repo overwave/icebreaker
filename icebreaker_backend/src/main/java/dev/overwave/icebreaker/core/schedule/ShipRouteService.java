@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,24 +28,29 @@ public class ShipRouteService {
 
     @SneakyThrows
     public void saveRoutes(List<ScheduledShip> ships) {
+        Map<Long, NavigationRequest> navigationRequests = navigationRequestRepository.findAll()
+                .stream()
+                .collect(Collectors.toMap(NavigationRequest::getId, nr -> nr));
         for (ScheduledShip ship : ships) {
-            Optional<NavigationRequest> navigationRequestO = navigationRequestRepository.findById(ship.getRequestId());
+            NavigationRequest navigationRequest = navigationRequests.get(ship.getRequestId());
             if (ship.getStatus() == ScheduleStatus.STUCK) {
-                navigationRequestO.ifPresent(nr -> nr.setStatus(RequestStatus.REJECTED));
                 continue;
+            }
+            if (navigationRequest != null) {
+                navigationRequest.setStatus(RequestStatus.APPROVED);
             }
             List<ConfirmedRouteSegment> routeSegments = ship.getRouteSegments();
             IcebreakerLocation icebreakerLocation = icebreakerLocationRepository.findByIcebreakerId(ship.getShipId());
             Instant previousEnd = ship.isIcebreaker() ?
-                    icebreakerLocation.getStartDate() : navigationRequestO.orElseThrow().getStartDate();
+                    icebreakerLocation.getStartDate() : navigationRequest.getStartDate();
             Ship shipEntity = ship.isIcebreaker() ?
-                    icebreakerLocation.getIcebreaker() : navigationRequestO.orElseThrow().getShip();
+                    icebreakerLocation.getIcebreaker() : navigationRequest.getShip();
             for (ConfirmedRouteSegment segment : routeSegments) {
                 if (previousEnd.isBefore(segment.interval().start())) {
                     // add waiting
                     ShipRouteEntity waitRoute = ShipRouteEntity.builder()
                             .ship(shipEntity)
-                            .navigationRequest(navigationRequestO.orElse(null))
+                            .navigationRequest(navigationRequest)
                             .startPoint(navigationPointRepository.findByIdOrThrow(segment.from().id()))
                             .finishPoint(navigationPointRepository.findByIdOrThrow(segment.from().id()))
                             .startDate(previousEnd)
@@ -58,7 +65,7 @@ public class ShipRouteService {
                         .flatMap(List::stream).map(ShipStatic::id).toList();
                 ShipRouteEntity shipRoute = ShipRouteEntity.builder()
                         .ship(shipEntity)
-                        .navigationRequest(navigationRequestO.orElse(null))
+                        .navigationRequest(navigationRequest)
                         .startPoint(navigationPointRepository.findByIdOrThrow(segment.from().id()))
                         .finishPoint(navigationPointRepository.findByIdOrThrow(segment.to().id()))
                         .startDate(segment.interval().start())
@@ -69,7 +76,11 @@ public class ShipRouteService {
                 shipRouteRepository.save(shipRoute);
                 previousEnd = segment.interval().end();
             }
-            navigationRequestO.ifPresent(nr -> nr.setStatus(RequestStatus.APPROVED));
+        }
+        for (NavigationRequest navigationRequest : navigationRequests.values()) {
+            if (navigationRequest.getStatus() != RequestStatus.APPROVED) {
+                navigationRequest.setStatus(RequestStatus.REJECTED);
+            }
         }
     }
 }
