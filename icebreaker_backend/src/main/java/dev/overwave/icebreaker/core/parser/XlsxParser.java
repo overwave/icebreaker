@@ -11,23 +11,24 @@ import dev.overwave.icebreaker.core.util.GeometryUtils;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.awt.*;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,15 +48,16 @@ import static java.util.Spliterators.spliteratorUnknownSize;
 @UtilityClass
 public class XlsxParser {
     private static final Period VELOCITY_INTERVAL_OFFSET = Period.ofDays(365 * 4 + 1);
+    private static final Color COLOR = new Color(68, 128, 243);
 
     @SneakyThrows
-    public void createFileWithGanttDiagram(List<ShipSchedule> segmentsByShipName,
-                                           LocalDate firstDate, LocalDate finishDate) {
+    public byte[] createFileWithGanttDiagram(List<ShipSchedule> segmentsByShipName,
+                                             LocalDate firstDate, LocalDate finishDate) {
         Workbook workbook = new XSSFWorkbook();
 
         Sheet sheet = workbook.createSheet("Gantt diagram");
         sheet.setColumnWidth(0, 6000);
-        sheet.setColumnWidth(1, 10000);
+        sheet.setColumnWidth(1, 11000);
 
         Row header = sheet.createRow(0);
         Cell headerShipName = header.createCell(0, CellType.STRING);
@@ -65,21 +67,37 @@ public class XlsxParser {
         // заполняем 0ю колонку названиями кораблей и 1ю колонку инфой о сегментах
         int rowNum = 0;
         Map<Integer, ScheduleSegment> segmentsByRowIdx = new HashMap<>();
+        List<Integer> rowNumsWithTopBorder = new ArrayList<>();
+        // стиль подведения верхней границы
+        CellStyle topBordered = workbook.createCellStyle();
+        topBordered.setBorderTop(BorderStyle.MEDIUM);
+        CellStyle sidesBordered = workbook.createCellStyle();
+        sidesBordered.setBorderLeft(BorderStyle.MEDIUM);
+        sidesBordered.setBorderRight(BorderStyle.MEDIUM);
+        CellStyle sidesTopBordered = workbook.createCellStyle();
+        sidesTopBordered.setBorderLeft(BorderStyle.MEDIUM);
+        sidesTopBordered.setBorderRight(BorderStyle.MEDIUM);
+        sidesTopBordered.setBorderTop(BorderStyle.MEDIUM);
+
         // названия кораблей и сегменты начинаются с 1й строки
         for (ShipSchedule shipSchedule : segmentsByShipName) {
             Row shipNameRow = sheet.createRow(++rowNum);
+            rowNumsWithTopBorder.add(rowNum);
             Cell shipNameCell = shipNameRow.createCell(0, CellType.STRING);
             shipNameCell.setCellValue(shipSchedule.shipName());
+            shipNameCell.setCellStyle(topBordered);
+
             Cell firstSegmentCell = shipNameRow.createCell(1, CellType.STRING);
             List<ScheduleSegment> segments = shipSchedule.segments();
-            firstSegmentCell.setCellValue(segments.getFirst().startPointName() + " - "
-                    + segments.getFirst().finishPointName());
+            firstSegmentCell.setCellValue(getCellText(segments.getFirst()));
+            firstSegmentCell.setCellStyle(sidesTopBordered);
             segmentsByRowIdx.put(rowNum, segments.getFirst());
             for (int i = 1; i < segments.size(); i++) {
                 Row segmentRow = sheet.createRow(++rowNum);
                 Cell nextSegmentCell = segmentRow.createCell(1, CellType.STRING);
-                nextSegmentCell.setCellValue(segments.get(i).startPointName() + " - "
-                        + segments.get(i).finishPointName());
+                nextSegmentCell.setCellStyle(sidesBordered);
+                String name = getCellText(segments.get(i));
+                nextSegmentCell.setCellValue(name);
                 segmentsByRowIdx.put(rowNum, segments.get(i));
             }
         }
@@ -92,13 +110,18 @@ public class XlsxParser {
 
         // стиль для окрашивания ячеек
         CellStyle colored = workbook.createCellStyle();
-        colored.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+        colored.setFillForegroundColor(new XSSFColor(COLOR, null));
         colored.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        CellStyle coloredTopBordered = workbook.createCellStyle();
+        coloredTopBordered.setFillForegroundColor(new XSSFColor(COLOR, null));
+        coloredTopBordered.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        coloredTopBordered.setBorderTop(BorderStyle.MEDIUM);
 
         int dateCellIdx = 2;
         //заполняем остальные колонки с датами и закрашиваем ячейки
         for (LocalDate date = firstDate; !date.isAfter(finishDate); date = date.plusDays(1)) {
-            sheet.setColumnWidth(dateCellIdx, 4000);
+            sheet.setColumnWidth(dateCellIdx, 2000);
             Cell dateCell = header.createCell(dateCellIdx, CellType.STRING);
             dateCell.setCellStyle(dateStyle);
             dateCell.setCellValue(DateParser.localDateToString(date));
@@ -106,20 +129,28 @@ public class XlsxParser {
                 ScheduleSegment segment = segmentsByRowIdx.get(rowIdx);
                 Row segmentRow = sheet.getRow(rowIdx);
                 Cell segmentCell = segmentRow.createCell(dateCellIdx, CellType.BLANK);
-                if (segment.contains(date)) {
+                if (rowNumsWithTopBorder.contains(rowIdx) && segment.contains(date)) {
+                    segmentCell.setCellStyle(coloredTopBordered);
+                } else if (rowNumsWithTopBorder.contains(rowIdx) && !segment.contains(date)) {
+                    segmentCell.setCellStyle(topBordered);
+                } else if (segment.contains(date)) {
                     segmentCell.setCellStyle(colored);
                 }
             }
             dateCellIdx++;
         }
 
-        File currDir = new File(".");
-        String path = currDir.getAbsolutePath();
-        String fileLocation = path.substring(0, path.length() - 1) + "scheduleGantt.xlsx";
-
-        FileOutputStream outputStream = new FileOutputStream(fileLocation);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         workbook.write(outputStream);
         workbook.close();
+        return outputStream.toByteArray();
+    }
+
+    private String getCellText(ScheduleSegment segment) {
+        if (segment.startPointName().equals(segment.finishPointName())) {
+            return "Ожидание в " + segment.startPointName();
+        }
+        return segment.startPointName() + " → " + segment.finishPointName();
     }
 
     @SneakyThrows
