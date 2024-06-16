@@ -72,7 +72,7 @@ export default function PopupNewApplication({
 
     const date = `${selectedDate.getFullYear()}-${addZero(
       selectedDate.getMonth() + 1
-    )}-${selectedDate.getDate()}`;
+    )}-${addZero(selectedDate.getDate())}`;
     const values = {
       shipId: ships[selectedShip].id,
       startDate: date,

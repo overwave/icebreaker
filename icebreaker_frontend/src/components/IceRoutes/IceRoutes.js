@@ -8,6 +8,7 @@ export default function IceRoutes({
   allIcebreakers,
   getIceGantt,
   getIceRoute,
+  idIcebreaker
 }) {
   useEffect(() => {
     getAllIcebreaker();
@@ -25,6 +26,7 @@ export default function IceRoutes({
               info={info}
               getIceGantt={getIceGantt}
               getIceRoute={getIceRoute}
+              idIcebreaker={idIcebreaker}
             />
           );
         })}
