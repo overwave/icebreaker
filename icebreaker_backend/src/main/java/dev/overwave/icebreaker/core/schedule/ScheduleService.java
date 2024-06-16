@@ -7,14 +7,23 @@ import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.VelocityIntervalStatic;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.NavigationPointStatic;
+import dev.overwave.icebreaker.core.navigation.NavigationRequest;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestMapper;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestRepository;
 import dev.overwave.icebreaker.core.navigation.NavigationRequestStatic;
 import dev.overwave.icebreaker.core.navigation.RequestStatus;
+import dev.overwave.icebreaker.core.parser.ScheduleSegment;
+import dev.overwave.icebreaker.core.parser.ShipSchedule;
+import dev.overwave.icebreaker.core.parser.XlsxParser;
 import dev.overwave.icebreaker.core.route.Route;
 import dev.overwave.icebreaker.core.route.Router;
 import dev.overwave.icebreaker.core.schedule.ConfirmedRouteSegment.ConfirmedRouteSegmentBuilder;
+import dev.overwave.icebreaker.core.ship.Ship;
+import dev.overwave.icebreaker.core.ship.ShipRepository;
 import dev.overwave.icebreaker.core.ship.ShipStatic;
+import dev.overwave.icebreaker.core.user.User;
+import dev.overwave.icebreaker.core.user.UserRepository;
+import dev.overwave.icebreaker.core.user.UserRole;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -48,6 +58,8 @@ public class ScheduleService {
     private final NavigationRequestRepository navigationRequestRepository;
     private final NavigationRequestMapper navigationRequestMapper;
     private final ShipRouteRepository shipRouteRepository;
+    private final ShipRepository shipRepository;
+    private final UserRepository userRepository;
     private final ShipRouteService shipRouteService;
     private final MetaRouter metaRouter;
 
@@ -55,6 +67,73 @@ public class ScheduleService {
     void tryReadGraph() {
         new Thread(contextHolder::readGraph).start();
         new Thread(contextHolder::readContext).start();
+    }
+
+    public byte[] createFileWithScheduleForIcebreaker(long icebreakerId) {
+        Ship icebreaker = shipRepository.findByIdOrThrow(icebreakerId);
+        List<ShipSchedule> shipSchedules = new ArrayList<>();
+        List<ScheduleSegment> segments =
+                    shipRouteRepository.findAllByShipIdOrderById(icebreakerId)
+                            .stream()
+                            .map(entity -> new ScheduleSegment(
+                                    entity.getStartPoint().getName(),
+                                    entity.getFinishPoint().getName(),
+                                    LocalDate.ofInstant(entity.getStartDate(), ZoneOffset.UTC),
+                                    LocalDate.ofInstant(entity.getEndDate(), ZoneOffset.UTC)))
+                            .toList();
+
+            shipSchedules.add(new ShipSchedule(icebreaker.getName(), segments));
+
+        LocalDate firstDate = segments.getFirst().startDate();
+        LocalDate finishDate = segments.getLast().finishDate();
+
+        return XlsxParser.createFileWithGanttDiagram(shipSchedules, firstDate, finishDate);
+    }
+
+    public byte[] createFileWithSchedule(String login) {
+        User user = userRepository.findByLoginOrThrow(login);
+        List<NavigationRequest> requests = new ArrayList<>();
+        if(user.getRole() == UserRole.CAPTAIN) {
+            requests = user.getShips().stream()
+                    .flatMap(ship -> ship.getNavigationRequests().stream())
+                    .filter(request -> request.getStatus() == RequestStatus.APPROVED)
+                    .toList();
+        } else {
+            requests = navigationRequestRepository.findAllByStatus(RequestStatus.APPROVED);
+        }
+        List<ShipSchedule> shipSchedules = new ArrayList<>();
+        LocalDate firstDate = LocalDate.MAX;
+        LocalDate finishDate= LocalDate.MIN;
+        for (NavigationRequest request : requests) {
+            List<ScheduleSegment> segments =
+                    shipRouteRepository.findAllByNavigationRequestIdOrderById(request.getId())
+                            .stream()
+                            .map(entity -> new ScheduleSegment(
+                                    entity.getStartPoint().getName(),
+                                    entity.getFinishPoint().getName(),
+                                    LocalDate.ofInstant(entity.getStartDate(), ZoneOffset.UTC),
+                                    LocalDate.ofInstant(entity.getEndDate(), ZoneOffset.UTC)))
+                                    .collect(Collectors.toList());
+            if (!segments.isEmpty()
+                    && segments.getFirst().startPointName().equals(segments.getFirst().finishPointName())) {
+                segments.removeFirst();
+            }
+
+            shipSchedules.add(new ShipSchedule(request.getShip().getName(), segments));
+            LocalDate currentFirstDate = segments.getFirst().startDate();
+            if(currentFirstDate.isBefore(firstDate)) {
+                firstDate = currentFirstDate;
+            }
+            LocalDate currentFinishDate = segments.getLast().finishDate();
+            if(currentFinishDate.isAfter(finishDate)) {
+                finishDate = currentFinishDate;
+            }
+        }
+        shipSchedules.sort(Comparator.comparing(s -> s.segments().stream()
+                .findFirst()
+                .map(ScheduleSegment::startDate)
+                .orElse(LocalDate.MIN)));
+        return XlsxParser.createFileWithGanttDiagram(shipSchedules, firstDate, finishDate);
     }
 
     public List<ShipRouteDto> createPreliminaryShipRoute(long shipId) {
@@ -249,7 +328,7 @@ public class ScheduleService {
     private void processReadyToConvoy(ScheduledShip ship, Instant now, MetaRouteContext context) {
         ScheduledShip follower = ship.getConvoyRequests().getFirst().getShip();
         if (follower.getStatus() != ScheduleStatus.READY_TO_FOLLOW ||
-            follower.getCurrentNavigationPointId() != ship.getCurrentNavigationPointId()) {
+                follower.getCurrentNavigationPointId() != ship.getCurrentNavigationPointId()) {
             ship.setStatus(ScheduleStatus.FREE)
                     .setActionEndEta(now);
             return;
