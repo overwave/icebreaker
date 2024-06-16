@@ -4,8 +4,6 @@ import dev.overwave.icebreaker.core.geospatial.Interval;
 import dev.overwave.icebreaker.core.geospatial.Node;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.geospatial.VelocityIntervalStatic;
-import dev.overwave.icebreaker.core.lock.Lock;
-import dev.overwave.icebreaker.core.lock.LockRepository;
 import dev.overwave.icebreaker.core.lock.LockStatus;
 import dev.overwave.icebreaker.core.navigation.MovementType;
 import dev.overwave.icebreaker.core.navigation.NavigationPointStatic;
@@ -20,9 +18,10 @@ import dev.overwave.icebreaker.core.ship.ShipStatic;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -47,10 +46,9 @@ public class ScheduleService {
     private final NavigationRequestMapper navigationRequestMapper;
     private final ShipRouteRepository shipRouteRepository;
     private final ShipRouteService shipRouteService;
-    private final LockRepository lockRepository;
-    private final TransactionTemplate transactionTemplate;
     private final ContextHolder contextHolder;
     private final MetaRouter metaRouter;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     @SneakyThrows
     public void createSchedule() {
@@ -61,8 +59,8 @@ public class ScheduleService {
         boolean acquiredLock = acquireLock();
         if (!acquiredLock) {
             while (!acquiredLock) {
-                acquiredLock = acquireLock();
                 Thread.sleep(Duration.ofSeconds(1));
+                acquiredLock = acquireLock();
             }
             releaseLock();
             return;
@@ -125,29 +123,34 @@ public class ScheduleService {
     }
 
     private boolean acquireLock() {
-        return Boolean.TRUE.equals(transactionTemplate.execute(ts -> {
-            List<Lock> locks = lockRepository.findAll();
-            if (locks.isEmpty()) {
-                lockRepository.saveAndFlush(new Lock(LockStatus.CLOSED, Instant.now()));
-                return true;
-            }
-            Lock lock = locks.getFirst();
-            if (lock.getStatus() == LockStatus.CLOSED) {
-                return false;
-            }
-            lock.setStatus(LockStatus.CLOSED);
-            lock.setUpdatedAt(Instant.now());
-            lockRepository.saveAndFlush(lock);
+        log.info("acquiring lock");
+        Optional<LockStatus> lockO = jdbcTemplate.query("select status from lock",
+                (rs, i) -> LockStatus.valueOf(rs.getString(1))).stream().findFirst();
+
+        if (lockO.isEmpty()) {
+            jdbcTemplate.update("insert into lock(status, updated_at) values (:status, :now)",
+                    Map.of("status", LockStatus.CLOSED.name(),
+                            "now", Timestamp.from(Instant.now())));
+            log.info("lock created");
             return true;
-        }));
+        }
+        LockStatus lock = lockO.get();
+        if (lock == LockStatus.CLOSED) {
+            log.info("lock is already taken");
+            return false;
+        }
+        jdbcTemplate.update("update lock set status = :status, updated_at = :now where true",
+                Map.of("status", LockStatus.CLOSED.name(),
+                        "now", Timestamp.from(Instant.now())));
+        log.info("lock acquired");
+        return true;
     }
 
     private void releaseLock() {
-        transactionTemplate.executeWithoutResult(ts -> {
-            Lock lock = lockRepository.findAll().getFirst();
-            lock.setStatus(LockStatus.OPEN);
-            lock.setUpdatedAt(Instant.now());
-        });
+        jdbcTemplate.update("update lock set status = :status, updated_at = :now where true",
+                Map.of("status", LockStatus.OPEN.name(),
+                        "now", Timestamp.from(Instant.now())));
+        log.info("lock released");
     }
 
     private boolean areMovingShips(List<ScheduledShip> ships) {

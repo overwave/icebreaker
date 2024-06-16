@@ -23,9 +23,9 @@ class ShipServiceTest {
     void getShips() {
         userService.registerUser(new RegisterUserRequestDto("user", "password", UserRole.CAPTAIN));
         ShipDto ship = shipService.createShip(new ShipCreateRequest("Плот", 19, IceClass.ARC_4), "user");
-        assertThat(ship).isEqualTo(new ShipDto(ship.id(), "Плот", 19, IceClass.ARC_4));
+        assertThat(ship).isEqualTo(new ShipDto(ship.id(), "Плот", 19, IceClass.ARC_4.name()));
 
         List<ShipDto> ships = shipService.getShips("user");
-        assertThat(ships).containsExactly(new ShipDto(ship.id(), "Плот", 19, IceClass.ARC_4));
+        assertThat(ships).containsExactly(new ShipDto(ship.id(), "Плот", 19, IceClass.ARC_4.name()));
     }
 }

@@ -24,6 +24,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ContextHolder {
-
+    private final TransactionTemplate transactionTemplate;
     private final NavigationPointRepository navigationPointRepository;
     private final NavigationPointMapper navigationPointMapper;
 
@@ -56,8 +57,8 @@ public class ContextHolder {
 
     @PostConstruct
     void tryReadGraph() {
+        new Thread(() -> transactionTemplate.executeWithoutResult(ts -> readContext())).start();
         new Thread(this::readGraph).start();
-        new Thread(this::readContext).start();
     }
 
     public void readGraph() {
