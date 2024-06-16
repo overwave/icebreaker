@@ -25,6 +25,7 @@ export default function Main({
   getIceRoute,
   iceRoute,
   idIcebreaker,
+  dateIceFlotation
 }) {
   const [shipGeo, setShipGeo] = useState(0);
   const currentUser = useContext(CurrentUserContext);
@@ -74,6 +75,7 @@ export default function Main({
           shipRoute={shipRoute}
           iceRoute={iceRoute}
           idIcebreaker={idIcebreaker}
+          dateIceFlotation={dateIceFlotation}
         />
       </div>
 

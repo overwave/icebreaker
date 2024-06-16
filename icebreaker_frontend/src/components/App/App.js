@@ -86,6 +86,13 @@ function App() {
   // Все ледоколы
   const [allIcebreakers, setAllIcebreakers] = useState([]);
 
+  // Дата ледовой проходимости
+  const [dateIceFlotation, setDateIceFlotation] = useState(
+    localStorage.getItem("dateIceFlotation")
+      ? localStorage.getItem("dateIceFlotation")
+      : "2024-03-03"
+  );
+
   const history = useHistory();
   const { pathname } = useLocation();
 
@@ -325,6 +332,9 @@ function App() {
     mainApi
       .getShipRoute({ id })
       .then((res) => {
+        setDateIceFlotation(res[0].iceFlotationData);
+        localStorage.setItem("dateIceFlotation", res[0].iceFlotationData);
+
         setIceRoute([]);
         localStorage.removeItem("iceRoute");
         setIdIcebreaker(undefined);
@@ -349,6 +359,12 @@ function App() {
     mainApi
       .getIceRoute(id)
       .then((res) => {
+        setDateIceFlotation(res.segments[0].iceFlotationData);
+        localStorage.setItem(
+          "dateIceFlotation",
+          res.segments[0].iceFlotationData
+        );
+
         setShipRoute([]);
         localStorage.removeItem("shipRoute");
         localStorage.removeItem("activeApplication");
@@ -359,7 +375,7 @@ function App() {
         setIceRoute(res.segments);
         localStorage.setItem("iceRoute", JSON.stringify(res.segments));
 
-        window.location.reload();
+        //window.location.reload();
       })
       .catch((err) => {
         console.log(`Ошибка: ${err}`);
@@ -530,6 +546,7 @@ function App() {
                   getIceRoute={getIceRoute}
                   iceRoute={iceRoute}
                   idIcebreaker={idIcebreaker}
+                  dateIceFlotation={dateIceFlotation}
                 />
               </ProtectedRoute>
 

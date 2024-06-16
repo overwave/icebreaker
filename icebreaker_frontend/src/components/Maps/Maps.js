@@ -21,6 +21,7 @@ export default function Maps({
   shipRoute,
   iceRoute,
   idIcebreaker,
+  dateIceFlotation
 }) {
   const [geometryPoints, setGeometryPoints] = useState([]);
   const [geometry, setGeometry] = useState([]);
@@ -29,18 +30,18 @@ export default function Maps({
 
   const ymap = useRef(null);
   const ymaps = useRef(null);
-  const testGeometry = [
+  /* const testGeometry = [
     [70.28319, 57.787407],
     [71.284454, 60.68428],
     [74.284454, 62.68428],
     [75.284454, 66.68428],
-  ];
+  ]; */
 
   const onLoad = useCallback(
     (it) => {
       ymaps.current = it;
       const layer = new ymaps.current.Layer(
-        "https://overwave.dev/icebreaker/tiles/2024-03-03/%z/%x-%y.jpg",
+        `https://overwave.dev/icebreaker/tiles/${dateIceFlotation}/%z/%x-%y.jpg`,
         { tileTransparent: true }
       );
       ymap.current.layers.add(layer);
