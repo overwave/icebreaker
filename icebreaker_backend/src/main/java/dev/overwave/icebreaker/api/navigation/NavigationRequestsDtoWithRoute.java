@@ -5,6 +5,6 @@ import java.util.List;
 public record NavigationRequestsDtoWithRoute(
         List<NavigationRequestPendingDto> pending,
         List<NavigationRequestWithRouteDto> agreed,
-        List<NavigationRequestWithRouteDto> archive
+        List<NavigationRequestPendingDto> archive
 ) {
 }

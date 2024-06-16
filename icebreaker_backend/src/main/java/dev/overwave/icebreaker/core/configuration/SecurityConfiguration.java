@@ -44,7 +44,8 @@ public class SecurityConfiguration {
         return http.authorizeHttpRequests(matcherRegistry ->
                         matcherRegistry.requestMatchers(
                                         "/icebreaker/api/user/me",
-                                        "/icebreaker/api/ship/ships"
+                                        "/icebreaker/api/ship/ships",
+                                        "/icebreaker/api/schedule/schedules"
                                 ).authenticated()
                                 .anyRequest().permitAll()
                 )

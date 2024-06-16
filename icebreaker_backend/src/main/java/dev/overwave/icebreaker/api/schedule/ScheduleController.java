@@ -1,6 +1,8 @@
 package dev.overwave.icebreaker.api.schedule;
 
 
+import dev.overwave.icebreaker.api.navigation.NavigationRequestController;
+import dev.overwave.icebreaker.api.navigation.NavigationRequestsDtoWithRoute;
 import dev.overwave.icebreaker.core.schedule.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
@@ -8,6 +10,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,10 +27,13 @@ public class ScheduleController {
     private static final MediaType XLSX_MEDIA_TYPE =
             MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     private final ScheduleService scheduleService;
+    private final NavigationRequestController navigationRequestController;
 
     @PutMapping("/schedules")
-    public void createSchedule() {
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public NavigationRequestsDtoWithRoute createSchedule(Principal principal) {
         scheduleService.createSchedule();
+        return navigationRequestController.getNavigationRequests(principal);
     }
 
     @GetMapping("/gantt")

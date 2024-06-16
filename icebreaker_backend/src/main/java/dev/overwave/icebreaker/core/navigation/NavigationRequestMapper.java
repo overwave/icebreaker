@@ -22,6 +22,7 @@ public class NavigationRequestMapper {
                 ship.getId(),
                 ship.getName(),
                 ship.getIceClass().name(),
+                ship.getSpeed(),
                 instantToLocalDate(navigationRequest.getStartDate()),
                 navigationRequest.getStartPoint().getId(),
                 navigationRequest.getStartPoint().getName(),

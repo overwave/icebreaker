@@ -17,7 +17,6 @@ import dev.overwave.icebreaker.api.navigation.ShipRouteDto;
 import dev.overwave.icebreaker.api.ship.ShipDto;
 import dev.overwave.icebreaker.core.geospatial.Point;
 import dev.overwave.icebreaker.core.schedule.ContextHolder;
-import dev.overwave.icebreaker.core.schedule.ScheduleService;
 import dev.overwave.icebreaker.core.schedule.ShipRouteEntity;
 import dev.overwave.icebreaker.core.schedule.ShipRouteMapper;
 import dev.overwave.icebreaker.core.schedule.ShipRouteRepository;
@@ -50,7 +49,6 @@ public class NavigationRequestService {
     private final ShipRouteRepository shipRouteRepository;
     private final NavigationPointRepository navigationPointRepository;
     private final UserRepository userRepository;
-    private final ScheduleService scheduleService;
     private final ObjectMapper objectMapper;
     private final ShipRouteMapper shipRouteMapper;
     private final ContextHolder contextHolder;
@@ -69,21 +67,19 @@ public class NavigationRequestService {
         List<NavigationRequest> requests = getRequestsByUser(login);
         Map<RequestStatus, List<NavigationRequest>> requestsByStatus = requests.stream()
                 .collect(Collectors.groupingBy(NavigationRequest::getStatus));
-        List<NavigationRequestPendingDto> pending = requestsByStatus.getOrDefault(RequestStatus.PENDING, List.of())
-                .stream()
-                .map(navigationRequestMapper::toNavigationRequestPendingDto)
-                .toList();
         return new NavigationRequestsDtoWithRoute(
-                pending,
-                getApprovedRoutes(requestsByStatus),
-                List.of()
+                mapRequests(requestsByStatus.getOrDefault(RequestStatus.PENDING, List.of())),
+                getApprovedRoutes(requestsByStatus.getOrDefault(RequestStatus.APPROVED, List.of())),
+                mapRequests(requestsByStatus.getOrDefault(RequestStatus.REJECTED, List.of()))
         );
     }
 
-    private List<NavigationRequestWithRouteDto> getApprovedRoutes(
-            Map<RequestStatus, List<NavigationRequest>> requestsByStatus) {
-        List<NavigationRequest> approved = requestsByStatus.getOrDefault(RequestStatus.APPROVED, List.of());
-        return approved.stream().map(request -> {
+    private List<NavigationRequestPendingDto> mapRequests(List<NavigationRequest> requests) {
+        return requests.stream().map(navigationRequestMapper::toNavigationRequestPendingDto).toList();
+    }
+
+    private List<NavigationRequestWithRouteDto> getApprovedRoutes(List<NavigationRequest> requests) {
+        return requests.stream().map(request -> {
             Ship ship = request.getShip();
             List<ShipRouteEntity> segments = shipRouteRepository.findAllByNavigationRequestIdOrderById(request.getId());
 
@@ -134,9 +130,7 @@ public class NavigationRequestService {
     public List<NavigationRequestPendingDto> getNavigationRequestsPending(String login) {
         User user = userRepository.findByLoginOrThrow(login);
         if (user.getRole().equals(UserRole.ADMIN)) {
-            return navigationRequestRepository.findAllByStatus(RequestStatus.PENDING).stream()
-                    .map(navigationRequestMapper::toNavigationRequestPendingDto)
-                    .toList();
+            return mapRequests(navigationRequestRepository.findAllByStatus(RequestStatus.PENDING));
         }
         return user.getShips().stream()
                 .flatMap(ship -> ship.getNavigationRequests().stream())
