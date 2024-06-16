@@ -10,6 +10,7 @@ public record NavigationRequestWithRouteDto(
         long shipId,
         String shipName,
         String shipClass,
+        float speed,
         boolean convoy,
         List<RouteSegmentDto> routes
 ) {
