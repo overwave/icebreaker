@@ -75,7 +75,6 @@ public class NavigationRequestController {
         velocityIntervalService.resetIntegralVelocities(file.getInputStream());
     }
 
-    @SneakyThrows
     @PutMapping("/default-routes")
     @PreAuthorize("hasAuthority('ADMIN')")
     public void resetDefaultRoutes() {

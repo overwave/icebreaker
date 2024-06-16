@@ -1,11 +1,12 @@
 package dev.overwave.icebreaker.api.ship;
 
-import dev.overwave.icebreaker.core.ship.IceClass;
+import lombok.Builder;
 
+@Builder
 public record ShipDto(
         long id,
         String name,
         float speed,
-        IceClass iceClass
+        String iceClass
 ) {
 }

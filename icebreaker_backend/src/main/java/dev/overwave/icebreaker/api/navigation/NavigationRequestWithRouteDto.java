@@ -1,7 +1,10 @@
 package dev.overwave.icebreaker.api.navigation;
 
+import lombok.Builder;
+
 import java.util.List;
 
+@Builder
 public record NavigationRequestWithRouteDto(
         long id,
         long shipId,
