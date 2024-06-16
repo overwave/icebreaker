@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ShipMapper {
     public ShipDto map(Ship ship) {
-        return new ShipDto(ship.getId(), ship.getName(), ship.getSpeed(), ship.getIceClass().getShortDescription());
+        return new ShipDto(ship.getId(), ship.getName(), ship.getSpeed(), ship.getIceClass().name());
     }
 
     public ShipStatic toShipStatic(Ship ship) {

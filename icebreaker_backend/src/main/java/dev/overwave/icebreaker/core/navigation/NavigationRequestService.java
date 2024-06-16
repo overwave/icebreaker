@@ -95,7 +95,7 @@ public class NavigationRequestService {
                         Optional<Ship> icebreaker =
                                 companions.stream().findFirst().map(shipRepository::findByIdOrThrow);
                         String icebreakerName = icebreaker.map(Ship::getName).orElse("");
-                        String icebreakerClass = icebreaker.map(s -> s.getIceClass().getShortDescription()).orElse("");
+                        String icebreakerClass = icebreaker.map(s -> s.getIceClass().name()).orElse("");
                         return RouteSegmentDto.builder()
                                 .id(routeSegment.getId())
                                 .startDate(asLD(routeSegment.getStartDate()))
@@ -113,7 +113,7 @@ public class NavigationRequestService {
                     .id(request.getId())
                     .shipId(ship.getId())
                     .shipName(ship.getName())
-                    .shipClass(ship.getIceClass().getShortDescription())
+                    .shipClass(ship.getIceClass().name())
                     .convoy(convoy)
                     .routes(routes)
                     .build();
@@ -219,7 +219,7 @@ public class NavigationRequestService {
                         .id(icebreaker.getId())
                         .name(icebreaker.getName())
                         .speed(icebreaker.getSpeed())
-                        .iceClass(icebreaker.getIceClass().getShortDescription())
+                        .iceClass(icebreaker.getIceClass().name())
                         .route(getRoute(icebreaker))
                         .build())
                 .toList();
@@ -235,7 +235,7 @@ public class NavigationRequestService {
                                     .id(ship.getId())
                                     .name(ship.getName())
                                     .speed(ship.getSpeed())
-                                    .iceClass(ship.getIceClass().getShortDescription())
+                                    .iceClass(ship.getIceClass().name())
                                     .build())
                             .toList();
                     boolean waiting = isWaiting(routeSegment);
