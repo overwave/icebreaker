@@ -89,6 +89,7 @@ public class NavigationRequestService {
 
             boolean convoy = segments.stream().anyMatch(s -> !s.getCompanions().equals("[]"));
             List<RouteSegmentDto> routes = segments.stream()
+                    .filter(routeSegment -> !isWaiting(routeSegment))
                     .map(routeSegment -> {
                         List<Long> companions = getCompanions(routeSegment);
                         Optional<Ship> icebreaker =
@@ -156,6 +157,7 @@ public class NavigationRequestService {
         List<ShipRouteEntity> routeSegments =
                 shipRouteRepository.findAllByNavigationRequestIdOrderById(navigationRequestId);
         List<ShipRouteDto> routes = new ArrayList<>();
+        Long previousRouteEpoch = null;
         for (ShipRouteEntity routeSegment : routeSegments) {
             if (isWaiting(routeSegment)) {
                 continue;
@@ -164,14 +166,15 @@ public class NavigationRequestService {
             ShipRouteDto route = ShipRouteDto.builder().id(routeSegment.getId())
                     .convoy(!companions.isEmpty())
                     .icebreaker(companions.stream().findFirst().map(String::valueOf).orElse(""))
-                    .routes(getHourlyPoints(routeSegment))
+                    .routes(getHourlyPoints(routeSegment, previousRouteEpoch))
                     .build();
+            previousRouteEpoch = route.routes().getLast().time();
             routes.add(route);
         }
         return routes;
     }
 
-    private List<PointAndTimestamp> getHourlyPoints(ShipRouteEntity routeSegment) {
+    private List<PointAndTimestamp> getHourlyPoints(ShipRouteEntity routeSegment, Long previousRouteEpoch) {
         if (isWaiting(routeSegment)) {
             List<PointAndTimestamp> points = new ArrayList<>();
             for (Instant i = routeSegment.getStartDate().truncatedTo(ChronoUnit.HOURS);
@@ -182,7 +185,12 @@ public class NavigationRequestService {
             return points;
         } else {
             List<Point> points = getPoints(routeSegment);
-            return shipRouteMapper.createPointAndTimestamp(routeSegment.getStartDate(), points);
+            List<PointAndTimestamp> timestamps =
+                    shipRouteMapper.createPointAndTimestamp(routeSegment.getStartDate(), points);
+            if (previousRouteEpoch != null) {
+                timestamps = timestamps.stream().dropWhile(t -> t.time() <= previousRouteEpoch).toList();
+            }
+            return timestamps;
         }
     }
 
